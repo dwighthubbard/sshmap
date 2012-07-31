@@ -1,0 +1,7 @@
+# This is an example hostlist file for the file: plugin
+# Each line not beginning with a # (hash mark) may be
+# a host or another plugin reference.
+testhost1
+testhost2
+# A plugin can reference another plugin, even itself
+file:sshmap/examples/hostlists/testlist2
