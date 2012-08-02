@@ -47,6 +47,9 @@ def _get_plugins():
 
 def expand(range_list):
     """ Expand a list of plugin:parameters into a list of hosts """
+    if type(range_list) is str:
+      range_list=[range_list]
+      
     # Find all the host list plugins
     plugins=_get_plugins()
     

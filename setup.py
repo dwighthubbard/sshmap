@@ -2,7 +2,7 @@
 import os
 from setuptools import setup
 """
- Copyright (c) 2010 Yahoo! Inc. All rights reserved.
+ Copyright (c) 2012 Yahoo! Inc. All rights reserved.
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
@@ -18,13 +18,13 @@ from setuptools import setup
 
 setup(
   name="sshmap",
-  version="0.2.0",
+  version="0.2.10",
   author="Dwight Hubbard",
   author_email="dhubbard@yahoo-inc.com",
   url="http://www.yahoo.com",
   license="LICENSE.txt",
   packages=["sshmap"],
-  scripts=["sshmap"],
+  scripts=["sshmap/sshmap.py"],
   long_description=open('README.txt').read(),
   description="A SSH Multiplexer desgined to use ssh to perform map/reduce like operations",
   requires=['paramiko'],
