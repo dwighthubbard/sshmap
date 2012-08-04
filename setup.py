@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import os
-from setuptools import setup
+from distutils.core import setup
 """
  Copyright (c) 2012 Yahoo! Inc. All rights reserved.
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,14 +18,14 @@ from setuptools import setup
 
 setup(
   name="sshmap",
-  version="0.2.10",
+  version="0.2.28",
   author="Dwight Hubbard",
   author_email="dhubbard@yahoo-inc.com",
   url="http://www.yahoo.com",
   license="LICENSE.txt",
-  packages=["sshmap"],
+  packages=["sshmap","hostlists","hostlists_plugins"],
   scripts=["sshmap/sshmap.py"],
   long_description=open('README.txt').read(),
-  description="A SSH Multiplexer desgined to use ssh to perform map/reduce like operations",
+  description="A SSH Multiplexer designed to use ssh to perform map/reduce like operations",
   requires=['paramiko'],
 )

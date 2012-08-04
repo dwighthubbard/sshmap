@@ -31,10 +31,10 @@ def _get_plugins():
     plugins=global_plugins
     pluginlist=[]
     for directory in sys.path:
-        if os.path.isdir(os.path.join(directory,'hostlists/plugins')):
-            templist=os.listdir(os.path.join(directory,'hostlists/plugins'))
+        if os.path.isdir(os.path.join(directory,'hostlists_plugins')):
+            templist=os.listdir(os.path.join(directory,'hostlists_plugins'))
             for item in templist:
-                pluginlist.append(os.path.join(os.path.join(directory,'hostlists/plugins'),item))
+                pluginlist.append(os.path.join(os.path.join(directory,'hostlists_plugins'),item))
     pluginlist.sort()
     # Create a dict mapping the plugin name to the plugin method
     for item in pluginlist:
@@ -43,7 +43,7 @@ def _get_plugins():
             mod=imp.load_module('hostlists_plugins_%s'% os.path.basename(item[:-3]),open(item),item,('.py','r',imp.PY_SOURCE))
             if mod.name() not in plugins.keys():
                 plugins[mod.name().lower()]=mod
-    return plugins    
+    return plugins
 
 def expand(range_list):
     """ Expand a list of plugin:parameters into a list of hosts """
