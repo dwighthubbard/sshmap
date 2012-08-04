@@ -1,5 +1,14 @@
 #!/usr/bin/env python
-""" A plugin extendable hostlist infrastructure """
+""" 
+A plugin extendable hostlist infrastructure 
+
+This module provides functions for getting a list of hosts
+from various systems as well as compressing the list into
+a simplified list.
+
+This module uses the hostlists_plugins python scripts
+to actually obtain the listings.  
+"""
 
 """
  Copyright (c) 2010 Yahoo! Inc. All rights reserved.
@@ -79,6 +88,9 @@ def expand(range_list):
         
 def compress(range_list):
     """ Compress a list of hosts into a more compact range representation """
+    # This is currently a simple stubbed out implementation that doesn't 
+    # really compress at all.
+    return ','.join(range_list).strip(',')
 
 if __name__ == "__main__":
     parser = optparse.OptionParser(usage="usage: %prog [options] plugin:parameters")
