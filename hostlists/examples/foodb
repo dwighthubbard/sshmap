@@ -1,0 +1,3 @@
+# Foo domain database backends
+range:db[01-04].foo.com
+

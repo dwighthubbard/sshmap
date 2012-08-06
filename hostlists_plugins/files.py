@@ -7,7 +7,7 @@ def name():
 def expand(value):
   tmplist=[]
   for host in [i.strip() for i in open(value,'r').readlines()]:
-    if not host.startswith('#'):
+    if not host.startswith('#') and len(host.strip()):
       tmplist.append(host)
   return tmplist
   

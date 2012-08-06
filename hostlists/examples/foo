@@ -1,11 +1,13 @@
 # This is an example hostlist file for the file: plugin
 # Each line not beginning with a # (hash mark) may be
 # a host or another plugin reference.
-testhost1
-# A plugin can reference another plugin, such as a range of hosts
-range:testhost[5-7,9]
-# Host IP addresses from dns
-dns:cnn.com
-# even itself
-file:sshmap/examples/hostlists/testlist2
+www.foo.com
 
+# A plugin can reference another plugin, such as a range of hosts
+range:frontend[01-11].foo.com
+
+# Host IP addresses from dns round robin
+dns:foo.com
+
+# or even another instance of thw same plugin itself
+file:hostlists/examples/foodb

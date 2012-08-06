@@ -19,17 +19,21 @@ def block_to_list(block):
   for letter in block:
     if letter in [',','-']:
       if in_range:
-        val2=int(val)
-        result+=range(val1,val2+1)
+        val2=val
+        val2_len=len(val2)
+        #result+=range(int(val1),int(val2)+1)
+        for value in range(int(val1),int(val2)+1):
+          result.append(str(value).zfill(val2_len))
         val=''
         val1=None
         in_range=False
       else:
-        val1=int(val)
+        val1=val
+        val1_len=len(val1)
         val=''
       if letter == ',':
         if val1 != None:
-          result.append(val1)
+          result.append(val1.zfill(val1_len))
       else:
         in_range=True
     else:
@@ -48,7 +52,7 @@ def expand_item(item):
     elif letter == ']' and in_block:
       in_block=False
       for value in block_to_list(block):
-        result.append('%s%d%s'% (pre_block,value,item[count+1:]))
+        result.append('%s%s%s'% (pre_block,value,item[count+1:]))
     elif in_block:
       block+=letter
     elif not in_block:
