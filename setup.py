@@ -18,13 +18,13 @@ from distutils.core import setup
 
 setup(
   name="sshmap",
-  version="0.2.29",
+  version="0.2.39",
   author="Dwight Hubbard",
   author_email="dhubbard@yahoo-inc.com",
   url="http://www.yahoo.com",
   license="LICENSE.txt",
   packages=["sshmap","hostlists","hostlists_plugins"],
-  scripts=["sshmap/sshmap.py"],
+  scripts=["sshmap/sshmap",'hostlists/hostlists'],
   long_description=open('README.txt').read(),
   description="A SSH Multiplexer designed to use ssh to perform map/reduce like operations",
   requires=['paramiko'],

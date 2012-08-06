@@ -2,6 +2,10 @@
 # Each line not beginning with a # (hash mark) may be
 # a host or another plugin reference.
 testhost1
-testhost2
-# A plugin can reference another plugin, even itself
+# A plugin can reference another plugin, such as a range of hosts
+range:testhost[5-7,9]
+# Host IP addresses from dns
+dns:cnn.com
+# even itself
 file:sshmap/examples/hostlists/testlist2
+

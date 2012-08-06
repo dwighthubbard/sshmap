@@ -97,6 +97,6 @@ if __name__ == "__main__":
     parser.add_option("-s","--sep",dest="sep",default=',',help="Seperator character, default=\",\"")
     parser.add_option("--onepass",dest="onepass",default=False,action="store_true")
     (options, args) = parser.parse_args()
-
-    print expand(args)
+    range=','.join(args)
+    print compress(expand(range.split(',')))
     

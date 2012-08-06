@@ -17,7 +17,6 @@ def expand(value):
   except dns.resolver.NoAnswer:
     pass
   for rdata in answers:
-    print dir(rdata)
     tmplist.append(rdata.address)
   return tmplist
   
