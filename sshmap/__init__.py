@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
  Copyright (c) 2010 Yahoo! Inc. All rights reserved.
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,5 +14,3 @@
  limitations under the License. See accompanying LICENSE file.
 """
 from sshmap import *
-
-

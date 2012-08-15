@@ -113,9 +113,15 @@ class ssh_result:
   def ssh_error_message(self):
     """ Return the ssh_error_message for the error code """
     return RUN_CODES[self.ssh_retcode]
-  def dump(self):
+  def dump(self,return_parm=True,return_retcode=True):
     """ Print all our public values """
-    print self.host,self.out_string().replace('\n',''),self.err_string().replace('\n',''),self.retcode,self.ssh_retcode,self.parm
+    print self.host,self.out_string().replace('\n',''),self.err_string().replace('\n',''),
+    if return_retcode:
+      print self.retcode,
+    if return_parm:
+      print self.ssh_retcode,self.parm
+    else:
+      print
   def print_output(self):
     """ Print output from the commands """
     for line in self.out:
@@ -134,11 +140,15 @@ class ssh_results(list):
   def dump(self):
     """ Dump all the result objects """
     for item in self.__iter__():
-      item.dump()
-  def print_output(self):
+      item.dump(return_parm=False,return_retcode=False)
+    print self.parm
+  def print_output(self,summarize_failures=False):
     """ Print all the objects """
     for item in self.__iter__():
       item.print_output()
+    if summarize_failures:
+      if len(self.parm['failures']):
+        print 'SSH Failures:',','.join(self.parm['failures']).strip(',')
 
 class fastSSHClient(paramiko.SSHClient):
   """ Paramiko SSHClient class extended with timeout support """
@@ -153,7 +163,7 @@ class fastSSHClient(paramiko.SSHClient):
 
 def run_command(host,command="uname -a",username=None,password=None,sudo=False,script=None,timeout=None,parms=None,client=None,bufsize=-1,cwd='/tmp',logging=False):
   """ 
-  Run a command or script on a remote node via ssh 
+  #Run a command or script on a remote node via ssh 
   """
   # Guess any parameters not passed that can be
   if isinstance(host,types.TupleType):
@@ -261,29 +271,7 @@ def status_clear():
   sys.stderr.write('\x1b[0G\x1b[0K')
   sys.stderr.flush()
 
-def read_conf(key=None,prompt=True):
-    """ Read settings from the config file """
-    try:
-        conf=json.load(open(os.path.expanduser('~/.fastssh2.conf'),'r'))
-    except IOError:
-        conf=conf_defaults
-    if key:
-        try:
-            return conf[key].encode('ascii')
-        except KeyError:
-            pass
-    else:
-        return conf
-    if key and prompt:
-        conf[key]=raw_input(conf_desc[key]+': ')
-        fh=open(os.path.expanduser('~/.fastssh2.conf'),'w')
-	os.fchmod(fh.fileno(),stat.S_IRUSR|stat.S_IWUSR)
-        json.dump(conf,fh)
-	fh.close()
-        return conf[key]
-    else:
-        return None
-
+# Built in callbacks
 """ Filter callback handlers """
 def callback_flowthrough(result):
   """ 
@@ -404,6 +392,30 @@ def callback_output_prefix_host(result):
   result.err=error
   return result
 
+def read_conf(key=None,prompt=True):
+    """ Read settings from the config file """
+    try:
+        conf=json.load(open(os.path.expanduser('~/.fastssh2.conf'),'r'))
+    except IOError:
+        conf=conf_defaults
+    if key:
+        try:
+            return conf[key].encode('ascii')
+        except KeyError:
+            pass
+    else:
+        return conf
+    if key and prompt:
+        conf[key]=raw_input(conf_desc[key]+': ')
+        fh=open(os.path.expanduser('~/.fastssh2.conf'),'w')
+	os.fchmod(fh.fileno(),stat.S_IRUSR|stat.S_IWUSR)
+        json.dump(conf,fh)
+	fh.close()
+        return conf[key]
+    else:
+        return None
+
+
 def init_worker():
   """ Set up the signal handler for new worker threads """
   signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -449,15 +461,12 @@ def run(range,command,username=None,password=None,sudo=False,script=None,timeout
     map_command=pool.imap_unordered
 
   # Create a process pool and pass the parameters to it
-  #status_info(output_callback,' \bSpawning processes')
   try:
     for result in map_command(run_command,[(host,command,username,password,sudo,script,timeout,results.parm,client) for host in hosts]):
-      #status_info(output_callback,' \bLoop start')
       results.parm['completed_host_count']=results.parm['completed_host_count']+1
       result.parm=results.parm
       if isinstance(output_callback,types.ListType):
         for callback in output_callback:
-          #print 'callback',callback,len(multiprocessing.active_children())
           result=callback(result)
       else:
         result=output_callback(result)

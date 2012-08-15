@@ -39,11 +39,12 @@ def _get_plugins():
     """ Find all the hostlists plugins """
     plugins=global_plugins
     pluginlist=[]
-    for directory in sys.path:
-        if os.path.isdir(os.path.join(directory,'hostlists_plugins')):
-            templist=os.listdir(os.path.join(directory,'hostlists_plugins'))
+    plugin_path=['/lib/hostlists']+sys.path
+    for directory in plugin_path:
+        if os.path.isdir(os.path.join(directory,'plugins')):
+            templist=os.listdir(os.path.join(directory,'plugins'))
             for item in templist:
-                pluginlist.append(os.path.join(os.path.join(directory,'hostlists_plugins'),item))
+                pluginlist.append(os.path.join(os.path.join(directory,'plugins'),item))
     pluginlist.sort()
     # Create a dict mapping the plugin name to the plugin method
     for item in pluginlist:
@@ -96,7 +97,11 @@ if __name__ == "__main__":
     parser = optparse.OptionParser(usage="usage: %prog [options] plugin:parameters")
     parser.add_option("-s","--sep",dest="sep",default=',',help="Seperator character, default=\",\"")
     parser.add_option("--onepass",dest="onepass",default=False,action="store_true")
+    parser.add_option("--expand","-e",dest="expand",default=False,action="store_true",help="Expand the host list and dislay one host per line")
     (options, args) = parser.parse_args()
     range=','.join(args)
-    print compress(expand(range.split(',')))
+    if options.expand:
+        print '\n'.join(expand(range.split(',')))
+    else:
+        print compress(expand(range.split(',')))
     

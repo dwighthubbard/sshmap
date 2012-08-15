@@ -57,4 +57,7 @@ def expand_item(item):
       block+=letter
     elif not in_block:
       pre_block += letter
-  return result
+  if len(result):
+    return result
+  else:
+    return [item]
