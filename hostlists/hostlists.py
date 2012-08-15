@@ -77,6 +77,10 @@ def expand(range_list):
                 item=None
                 newlist+=plugins[plugin].expand(':'.join(temp[1:]).strip(':'))
                 found_plugin=True
+        else:
+            # Default to running through the range plugin
+            item=None
+            newlist+=plugins['range'].expand(temp[0])
         if item:
             newlist.append(item)
     # Recurse back through ourselves incase a plugin returns a value that needs to be parsed
@@ -93,15 +97,36 @@ def compress(range_list):
     # really compress at all.
     return ','.join(range_list).strip(',')
 
+def range_split(range):
+    """ Split up a range string, this needs to seperate comma seperated
+    items unless they are within square brackets """
+    in_brackets=False
+    current=""
+    result_list=[]
+    for c in range:
+        if c in ['[']:
+            in_brackets=True
+        if c in [']']:
+            in_brackets=False
+        if not in_brackets and c==',':
+            result_list.append(current)
+            current=""
+        else:
+            current+=c
+    if len(current):
+        result_list.append(current)
+    return result_list
+    
 if __name__ == "__main__":
     parser = optparse.OptionParser(usage="usage: %prog [options] plugin:parameters")
     parser.add_option("-s","--sep",dest="sep",default=',',help="Seperator character, default=\",\"")
     parser.add_option("--onepass",dest="onepass",default=False,action="store_true")
     parser.add_option("--expand","-e",dest="expand",default=False,action="store_true",help="Expand the host list and dislay one host per line")
     (options, args) = parser.parse_args()
-    range=','.join(args)
+    range=range_split(','.join(args))
+    
     if options.expand:
-        print '\n'.join(expand(range.split(',')))
+        print '\n'.join(expand(range))
     else:
-        print compress(expand(range.split(',')))
+        print compress(expand(range))
     

@@ -429,7 +429,7 @@ def run(range,command,username=None,password=None,sudo=False,script=None,timeout
   None
   """
   status_info(output_callback,' \bLooking up hosts')
-  hosts=hostlists.expand(range)
+  hosts=hostlists.expand(hostlists.range_split(range))
   if shuffle:
     random.shuffle(hosts)
   status_clear()
