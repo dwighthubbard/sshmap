@@ -94,7 +94,8 @@ def expand(range_list):
 def compress(range_list):
     """ Compress a list of hosts into a more compact range representation """
     # This is currently a simple stubbed out implementation that doesn't 
-    # really compress at all.
+    # really compress at all.  This functionality isn't really needed by
+    # sshmap to function.
     return ','.join(range_list).strip(',')
 
 def range_split(range):
