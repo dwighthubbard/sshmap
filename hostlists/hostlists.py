@@ -57,6 +57,12 @@ def _get_plugins():
     return plugins
 
 def expand(range_list):
+    """ 
+    Expand a list of lists and set operators into a final host lists 
+    >>> hostlists.expand(['foo[01-10]','-','foo[04-06]'])
+    ['foo09', 'foo08', 'foo07', 'foo02', 'foo01', 'foo03', 'foo10']
+    >>> 
+    """
     if type(range_list) is str:
       range_list=[range_list]
     new_list=[]
