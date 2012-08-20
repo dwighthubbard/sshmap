@@ -34,6 +34,7 @@ import imp
 
 # Global plugin cache so we don't constantly reload the plugin modules
 global_plugins={}
+SET_OPERATORS=['-']
 
 def _get_plugins():
     """ Find all the hostlists plugins """
@@ -56,11 +57,34 @@ def _get_plugins():
     return plugins
 
 def expand(range_list):
-    """ Expand a list of plugin:parameters into a list of hosts """
     if type(range_list) is str:
       range_list=[range_list]
-      
+    new_list=[]
+    set1=None
+    for item in range_list:
+        if set1 and operation:
+            set2=expand_item(item)
+            new_list.append(list(set(set1).difference(set(set2))))
+            set1=None
+            set2=None
+            operation=None
+        elif item in SET_OPERATORS and len(new_list):
+            set1=new_list.pop()
+            operation=item
+        else:
+            expanded_item=expand_item(item)
+            new_list.append(expanded_item)
+    new_list2=[]
+    for item in new_list:
+        new_list2+=item
+    return new_list2
+
+def expand_item(range_list):
+    """ Expand a list of plugin:parameters into a list of hosts """
+    #range_list=list(range_list)      
     # Find all the host list plugins
+    if type(range_list) is str:
+      range_list=[range_list]
     plugins=_get_plugins()
     
     # Iterate through our list
@@ -88,19 +112,20 @@ def expand(range_list):
     # load balancer vip that may container a number of hosts that need to be looked up via
     # the load_balancer plugin.
     if found_plugin:
-        newlist=expand(newlist)
+        newlist=expand_item(newlist)
     return newlist
-        
+
 def compress(range_list):
     """ Compress a list of hosts into a more compact range representation """
     # This is currently a simple stubbed out implementation that doesn't 
     # really compress at all.  This functionality isn't really needed by
     # sshmap to function.
     return ','.join(range_list).strip(',')
-
+        
 def range_split(range):
     """ Split up a range string, this needs to seperate comma seperated
-    items unless they are within square brackets """
+    items unless they are within square brackets and split out set operations
+    as seperate items."""
     in_brackets=False
     current=""
     result_list=[]
@@ -112,6 +137,12 @@ def range_split(range):
         if not in_brackets and c==',':
             result_list.append(current)
             current=""
+        elif not in_brackets and c=='-':
+            result_list.append(current)
+            result_list.append('-')
+            current=""
+        elif not in_brackets and c in [','] and len(current) == 0:
+            pass
         else:
             current+=c
     if len(current):
@@ -125,7 +156,6 @@ if __name__ == "__main__":
     parser.add_option("--expand","-e",dest="expand",default=False,action="store_true",help="Expand the host list and dislay one host per line")
     (options, args) = parser.parse_args()
     range=range_split(','.join(args))
-    
     if options.expand:
         print '\n'.join(expand(range))
     else:
