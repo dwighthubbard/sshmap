@@ -51,9 +51,13 @@ def _get_plugins():
     for item in pluginlist:
         if item.endswith('.py'):
             #mod=__import__(item[:-3])
-            mod=imp.load_module('hostlists_plugins_%s'% os.path.basename(item[:-3]),open(item),item,('.py','r',imp.PY_SOURCE))
-            if mod.name() not in plugins.keys():
-                plugins[mod.name().lower()]=mod
+            try:
+                mod=imp.load_module('hostlists_plugins_%s'% os.path.basename(item[:-3]),open(item),item,('.py','r',imp.PY_SOURCE))
+                if mod.name() not in plugins.keys():
+                    plugins[mod.name().lower()]=mod
+            except:
+                # Error in module import, probably a plugin bug
+                pass
     return plugins
 
 def expand(range_list):
