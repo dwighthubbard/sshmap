@@ -31,10 +31,16 @@ import sys
 import optparse
 import site
 import imp
+import json
 
 # Global plugin cache so we don't constantly reload the plugin modules
 global_plugins={}
+
+# A list of operators we use for set options
 SET_OPERATORS=['-']
+
+# Config file
+CONF_FILE=os.path.expanduser('~/.hostlists.conf')
 
 def _get_plugins():
     """ Find all the hostlists plugins """
@@ -64,6 +70,17 @@ def _get_plugins():
                 pass
     return plugins
 
+def get_setting(key):
+    try:
+        settings=json.load(open(CONF_FILE,'r'))
+    except IOError:
+        # Couldn't open the settings file
+        #print 'No such conf file'
+        return None
+    if key in settings.keys():
+        return settings[key]
+    return None
+         
 def expand(range_list,onepass=False):
     """ 
     Expand a list of lists and set operators into a final host lists 
