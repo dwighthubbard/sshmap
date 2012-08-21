@@ -53,8 +53,12 @@ def _get_plugins():
             #mod=__import__(item[:-3])
             try:
                 mod=imp.load_module('hostlists_plugins_%s'% os.path.basename(item[:-3]),open(item),item,('.py','r',imp.PY_SOURCE))
-                if mod.name() not in plugins.keys():
-                    plugins[mod.name().lower()]=mod
+                names=mod.name()
+                if type(names) is str:
+                    names=[names]
+                for name in names:
+                    if name not in plugins.keys():
+                        plugins[name.lower()]=mod
             except:
                 # Error in module import, probably a plugin bug
                 pass
@@ -89,6 +93,17 @@ def expand(range_list):
         new_list2+=item
     return new_list2
 
+def multiple_names(plugin):
+    plugins=_get_plugins()
+    count = 0
+    for item in plugins.keys():
+        if plugins[item]==plugin:
+            count=count+1
+    if count > 1:
+        return True
+    else:
+        return False
+        
 def expand_item(range_list):
     """ Expand a list of plugin:parameters into a list of hosts """
     #range_list=list(range_list)      
@@ -109,7 +124,10 @@ def expand_item(range_list):
             if plugin in plugins.keys():
                 # Call the plugin
                 item=None
-                newlist+=plugins[plugin].expand(':'.join(temp[1:]).strip(':'))
+                if multiple_names(plugin):
+                    newlist+=plugins[plugin].expand(':'.join(temp[1:]).strip(':'),name=plugin)
+                else:
+                    newlist+=plugins[plugin].expand(':'.join(temp[1:]).strip(':'))
                 found_plugin=True
         else:
             # Default to running through the range plugin
