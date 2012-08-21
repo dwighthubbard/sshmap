@@ -40,7 +40,7 @@ def _get_plugins():
     """ Find all the hostlists plugins """
     plugins=global_plugins
     pluginlist=[]
-    plugin_path=['/lib/hostlists']+sys.path
+    plugin_path=['/lib/hostlists','/home/y/lib/hostlists']+sys.path
     for directory in plugin_path:
         if os.path.isdir(os.path.join(directory,'plugins')):
             templist=os.listdir(os.path.join(directory,'plugins'))
