@@ -9,5 +9,15 @@ range:frontend[01-11].foo.com
 # Host IP addresses from dns round robin
 dns:foo.com
 
+# HAProxy backend nodes for frontend web
+haproxy:myhaproxy.foo.com:web
+
+# HAProxy backend nodes in up state for frontend web
+haproxy_up:myhaproxy.foo.com:web
+
+# HAProxy backend nodes in down state for frontend web
+haproxy_down:myhaproxy.foo.com:web
+
 # or even another instance of thw same plugin itself
 file:hostlists/examples/foodb
+

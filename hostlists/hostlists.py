@@ -40,7 +40,7 @@ def _get_plugins():
     """ Find all the hostlists plugins """
     plugins=global_plugins
     pluginlist=[]
-    plugin_path=['/lib/hostlists','/home/y/lib/hostlists']+sys.path
+    plugin_path=['/usr/lib/hostlists','/home/y/lib/hostlists']+sys.path
     for directory in plugin_path:
         if os.path.isdir(os.path.join(directory,'plugins')):
             templist=os.listdir(os.path.join(directory,'plugins'))
@@ -64,7 +64,7 @@ def _get_plugins():
                 pass
     return plugins
 
-def expand(range_list):
+def expand(range_list,onepass=False):
     """ 
     Expand a list of lists and set operators into a final host lists 
     >>> hostlists.expand(['foo[01-10]','-','foo[04-06]'])
@@ -86,7 +86,7 @@ def expand(range_list):
             set1=new_list.pop()
             operation=item
         else:
-            expanded_item=expand_item(item)
+            expanded_item=expand_item(item,onepass=onepass)
             new_list.append(expanded_item)
     new_list2=[]
     for item in new_list:
@@ -104,7 +104,7 @@ def multiple_names(plugin):
     else:
         return False
         
-def expand_item(range_list):
+def expand_item(range_list,onepass=False):
     """ Expand a list of plugin:parameters into a list of hosts """
     #range_list=list(range_list)      
     # Find all the host list plugins
@@ -124,11 +124,13 @@ def expand_item(range_list):
             if plugin in plugins.keys():
                 # Call the plugin
                 item=None
-                if multiple_names(plugin):
+                if multiple_names(plugins[plugin]):
                     newlist+=plugins[plugin].expand(':'.join(temp[1:]).strip(':'),name=plugin)
                 else:
                     newlist+=plugins[plugin].expand(':'.join(temp[1:]).strip(':'))
                 found_plugin=True
+            else:
+                print 'plugin',plugin,'not found',plugins.keys()
         else:
             # Default to running through the range plugin
             item=None
@@ -139,7 +141,7 @@ def expand_item(range_list):
     # by another plugin.  For example a dns resource that has an address that points to a
     # load balancer vip that may container a number of hosts that need to be looked up via
     # the load_balancer plugin.
-    if found_plugin:
+    if found_plugin and not onepass:
         newlist=expand_item(newlist)
     return newlist
 
@@ -185,7 +187,7 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args()
     range=range_split(','.join(args))
     if options.expand:
-        print '\n'.join(expand(range))
+        print '\n'.join(expand(range,onepass=options.onepass))
     else:
-        print compress(expand(range))
+        print compress(expand(range,onepass=options.onepass))
     

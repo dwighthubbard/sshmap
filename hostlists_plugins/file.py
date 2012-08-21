@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-""" hostlists plugin to get hosts from dns """
+""" hostlists plugin to get hosts from a file """
 
 """
  Copyright (c) 2012 Yahoo! Inc. All rights reserved.
@@ -16,19 +16,13 @@
  limitations under the License. See accompanying LICENSE file.
 """
 
-import dns.resolver
-
 def name():
-  return 'dnsip'
+  return ['file']
 
-def expand(value):
+def expand(value,name="file"):
   tmplist=[]
-  adresses=[]
-  try:
-    answers = list(dns.resolver.query(value))
-  except dns.resolver.NoAnswer:
-    answers=[]
-  for rdata in answers:
-    tmplist.append(rdata.address)
+  for host in [i.strip() for i in open(value,'r').readlines()]:
+    if not host.startswith('#') and len(host.strip()):
+      tmplist.append(host)
   return tmplist
   
