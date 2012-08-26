@@ -132,7 +132,7 @@ def expand(value,name='haproxy',method=None):
       for line in result.split('\n'):
         if not line.startswith('#') and len(line.strip()):
           splitline=line.strip().split(',')
-          if splitline[0]==backend and splitline[1] != 'BACKEND':
+          if (splitline[0]==backend or backend.lower()=='all') and splitline[1] not in ['BACKEND','FRONTEND']:
             if state.upper() == 'ALL' or (splitline[17]==state):
               tmplist.append(splitline[1])
       return tmplist
