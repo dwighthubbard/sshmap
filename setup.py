@@ -18,7 +18,7 @@ from distutils.core import setup
 
 setup(
   name="sshmap",
-  version="0.3.4",
+  version="0.3.5",
   author="Dwight Hubbard",
   author_email="dhubbard@yahoo-inc.com",
   url="http://www.yahoo.com",

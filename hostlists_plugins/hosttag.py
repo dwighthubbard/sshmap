@@ -58,7 +58,10 @@ def expand(value,name='hosttag',method=None):
   settings=hostlists.get_setting('hosttag_plugin')
   for server in settings['servers']:
     url='http://%s/api/host?tags=%s&group=%s' % (server,tags,group)
-    result=json.load(urllib2.urlopen(url))
+    try:
+      result=json.load(urllib2.urlopen(url))
+    except UrlError:
+      pass
     if len(result):
       for host in result:
         templist.append(host['name'])
