@@ -32,6 +32,9 @@ def name():
   """ Name of plugins this plugin responds to """
   return ['hosttag']
 
+def type():
+  return ['db']
+  
 def expand(value,name='hosttag',method=None):
   state='ALL'
   group='False'
