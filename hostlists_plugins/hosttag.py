@@ -60,8 +60,9 @@ def expand(value,name='hosttag',method=None):
     url='http://%s/api/host?tags=%s&group=%s' % (server,tags,group)
     try:
       result=json.load(urllib2.urlopen(url))
-    except UrlError:
-      pass
+    except urllib2.HTTPError:
+      # Get an error from the server rest api
+      result=[]
     if len(result):
       for host in result:
         templist.append(host['name'])
