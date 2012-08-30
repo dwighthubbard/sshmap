@@ -84,7 +84,10 @@ def expand(value,name='haproxy',method=None):
   temp=value.split(':')
   if len(temp):
     haproxy=temp[0]
-    backend=temp[1]
+    if len(temp) > 1:
+      backend=temp[1]
+    else:
+      backend='all'  
   else:
     return []
   # Determine settings

@@ -38,9 +38,9 @@ def expand(value):
       # it only if it's a unique hostname.
       revaddress=str(dns.resolver.query(result,'PTR')[0]).strip('.')
       if revaddress not in tmplist:
-        tmplist.append(revaddress)
+        tmplist.append('type_vip:'+revaddress)
     except dns.resolver.NXDOMAIN:
-      tmplist.append(address)
+      tmplist.append('type_vip:'+address)
   # if the tmplist with the reverse resolved hostnames
   # is not the same length as the list of addresses then
   # the site has the same hostname assigned to more than 
