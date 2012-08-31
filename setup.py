@@ -18,13 +18,13 @@ from distutils.core import setup
 
 setup(
   name="sshmap",
-  version="0.3.7",
+  version="0.3.8",
   author="Dwight Hubbard",
   author_email="dhubbard@yahoo-inc.com",
   url="http://www.yahoo.com",
   license="LICENSE.txt",
   packages=["sshmap","hostlists"],
-  data_files=[('/usr/lib/hostlists/plugins',['hostlists_plugins/file.py','hostlists_plugins/dns.py','hostlists_plugins/dnsip.py','hostlists_plugins/range.py','hostlists_plugins/haproxy.py','hostlists_plugins/hosttag.py','hostlists_plugins/type.py'])],
+  data_files=[('/usr/lib/hostlists/plugins',['hostlists_plugins/file.py','hostlists_plugins/dns.py','hostlists_plugins/dnsip.py','hostlists_plugins/range.py','hostlists_plugins/haproxy.py','hostlists_plugins/type.py'])],
   scripts=["sshmap/sshmap",'hostlists/hostlists'],
   long_description=open('README.txt').read(),
   description="A SSH Multiplexer designed to use ssh to perform map/reduce like operations",
