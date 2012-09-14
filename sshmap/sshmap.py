@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """ Python based ssh multiplexer optimized for map operations """
 
+#noinspection PyStatementEffect
 """
  Copyright (c) 2012 Yahoo! Inc. All rights reserved.
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,20 +25,15 @@ warnings.filterwarnings("ignore")
 import sys
 import os
 import stat
-import urllib
-import urllib2
 import getpass
 import socket
 import types
 import base64
-import time
-import re
 import random
 import signal
 from optparse import OptionParser
 import multiprocessing
 import subprocess
-import traceback
 
 # Imports from external python extension modules
 import paramiko
@@ -50,7 +46,7 @@ JOB_MAX=65
 try:
   for line in open('/proc/%d/limits'%os.getpid(),'r').readlines():
     if line.startswith('Max processes'):
- 	JOB_MAX=int(line.strip().split()[2])/3
+        JOB_MAX=int(line.strip().split()[2])/3
 except:
   pass
 
@@ -241,11 +237,11 @@ def run_command(host,command="uname -a",username=None,password=None,sudo=False,s
   result.ssh_retcode=RUN_OK
   return result
 
-""" Handy utility functions """
+# Handy utility functions
 def get_parm_val(parm=None,key=None):
   """ 
   Return the value of a key 
-  
+
   >>> get_parm_val(parm={'test':'val'},key='test')
   'val'
   >>> get_parm_val(parm={'test':'val'},key='foo')
@@ -272,11 +268,11 @@ def status_clear():
   sys.stderr.flush()
 
 # Built in callbacks
-""" Filter callback handlers """
+# Filter callback handlers
 def callback_flowthrough(result):
   """ 
   Builtin Callback, return the raw data passed
-  
+
   >>> result=callback_flowthrough(ssh_result(["output"], ["error"],"foo", 0))
   >>> result.dump()
   foo output error 0 0 None
@@ -339,7 +335,7 @@ def callback_filter_base64(result):
   result.err=[base64.b64encode(result.err_string)]
   return result
 
-""" Status callback handlers """
+#Status callback handlers
 def callback_status_count(result):
   """ 
   Builtin Callback, show the count complete/remaining 
@@ -350,7 +346,7 @@ def callback_status_count(result):
   sys.stderr.flush()
   return result
 
-""" Output callback handlers """
+#Output callback handlers
 def callback_output_prefix_host(result):
   """ 
   Builtin Callback, print the output with the hostname: prefixed to each line 
@@ -408,13 +404,12 @@ def read_conf(key=None,prompt=True):
     if key and prompt:
         conf[key]=raw_input(conf_desc[key]+': ')
         fh=open(os.path.expanduser('~/.fastssh2.conf'),'w')
-	os.fchmod(fh.fileno(),stat.S_IRUSR|stat.S_IWUSR)
+        os.fchmod(fh.fileno(),stat.S_IRUSR|stat.S_IWUSR)
         json.dump(conf,fh)
-	fh.close()
+        fh.close()
         return conf[key]
     else:
         return None
-
 
 def init_worker():
   """ Set up the signal handler for new worker threads """
@@ -463,7 +458,7 @@ def run(range,command,username=None,password=None,sudo=False,script=None,timeout
   # Create a process pool and pass the parameters to it
   try:
     for result in map_command(run_command,[(host,command,username,password,sudo,script,timeout,results.parm,client) for host in hosts]):
-      results.parm['completed_host_count']=results.parm['completed_host_count']+1
+      results.parm['completed_host_count'] += 1
       result.parm=results.parm
       if isinstance(output_callback,types.ListType):
         for callback in output_callback:
@@ -501,7 +496,7 @@ if __name__=="__main__":
   parser.add_option("--no_status",dest="show_status",default=True,action="store_false",help="Don't show a status count as the command progresses")
   parser.add_option("--sudo",dest="sudo",default=False,action="store_true",help="Use sudo to run the command as root")
   parser.add_option("--password",dest="password",default=None,action="store_true",help="Prompt for a password")
-  
+
   (options, args) = parser.parse_args()
 
   if len(args) == 1 and options.runscript:

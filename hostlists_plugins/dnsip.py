@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """ hostlists plugin to get hosts from dns """
 
+#noinspection PyStatementEffect
 """
  Copyright (c) 2012 Yahoo! Inc. All rights reserved.
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +24,6 @@ def name():
 
 def expand(value):
   tmplist=[]
-  adresses=[]
   try:
     answers = list(dns.resolver.query(value))
   except dns.resolver.NoAnswer:

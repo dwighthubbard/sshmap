@@ -35,14 +35,14 @@ def get_haproxy_socket_filename():
 
 def query_haproxy_socket(socket_file='/tmp/haproxy',command='show stat'):
   if not command.endswith('\n'):
-    command=command+'\n'
+      command += '\n'
   s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
   s.connect(socket_file)
   s.send(command)
   data=""
   d=s.recv(1024)
   while d:
-    data=data+d
+    data+=d
     d=s.recv(1024)
   #data = s.recv()
   s.close()

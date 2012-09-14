@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """ hostlists plugin to get hosts from a file """
 
+#noinspection PyStatementEffect
 """
  Copyright (c) 2012 Yahoo! Inc. All rights reserved.
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,7 +48,7 @@ def block_to_list(block):
         val1_len=len(val1)
         val=''
       if letter == ',':
-        if val1 != None:
+        if val1 is not None:
           result.append(val1.zfill(val1_len))
       else:
         in_range=True

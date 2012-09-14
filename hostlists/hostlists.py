@@ -10,6 +10,7 @@ This module uses the hostlists_plugins python scripts
 to actually obtain the listings.  
 """
 
+#noinspection PyStatementEffect
 """
  Copyright (c) 2010 Yahoo! Inc. All rights reserved.
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +30,6 @@ to actually obtain the listings.
 import os
 import sys
 import optparse
-import site
 import imp
 import json
 
@@ -92,6 +92,7 @@ def expand(range_list,onepass=False):
       range_list=[range_list]
     new_list=[]
     set1=None
+    operation=None
     for item in range_list:
         if set1 and operation:
             set2=expand_item(item)
@@ -115,7 +116,7 @@ def multiple_names(plugin):
     count = 0
     for item in plugins.keys():
         if plugins[item]==plugin:
-            count=count+1
+            count += 1
     if count > 1:
         return True
     else:
@@ -170,9 +171,9 @@ def compress(range_list):
     return ','.join(range_list).strip(',')
         
 def range_split(range):
-    """ Split up a range string, this needs to seperate comma seperated
+    """ Split up a range string, this needs to separate comma separated
     items unless they are within square brackets and split out set operations
-    as seperate items."""
+    as separate items."""
     in_brackets=False
     current=""
     result_list=[]
@@ -198,9 +199,9 @@ def range_split(range):
     
 if __name__ == "__main__":
     parser = optparse.OptionParser(usage="usage: %prog [options] plugin:parameters")
-    parser.add_option("-s","--sep",dest="sep",default=',',help="Seperator character, default=\",\"")
+    parser.add_option("-s","--sep",dest="sep",default=',',help="Separator character, default=\",\"")
     parser.add_option("--onepass",dest="onepass",default=False,action="store_true")
-    parser.add_option("--expand","-e",dest="expand",default=False,action="store_true",help="Expand the host list and dislay one host per line")
+    parser.add_option("--expand","-e",dest="expand",default=False,action="store_true",help="Expand the host list and display one host per line")
     (options, args) = parser.parse_args()
     range=range_split(','.join(args))
     if options.expand:

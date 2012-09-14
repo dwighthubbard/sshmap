@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """ haproxy host plugin """
 
+#noinspection PyStatementEffect
 """
  Copyright (c) 2012 Yahoo! Inc. All rights reserved.
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +17,7 @@
  limitations under the License. See accompanying LICENSE file.
 """
 
+#noinspection PyStatementEffect
 """
 NOTE:
 This script is primarily intended as a proof of concept of adding a load
@@ -125,7 +127,7 @@ def expand(value,name='haproxy',method=None):
     except:
       return []
   else:
-    url="http://%s/haproxy?stats;csv" % (haproxy)
+    url="http://%s/haproxy?stats;csv" % haproxy
     request = urllib2.Request(url)
     if userid and password:
       base64string = base64.encodestring('%s:%s' % (userid, password)).replace('\n', '')
