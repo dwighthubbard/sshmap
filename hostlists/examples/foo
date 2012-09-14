@@ -6,7 +6,7 @@ www.foo.com
 # A plugin can reference another plugin, such as a range of hosts
 range:frontend[01-11].foo.com
 
-# Host IP addresses from dns round robin
+# Get a list of hosts or ip addresses from dns
 dns:foo.com
 
 # HAProxy backend nodes for frontend web
