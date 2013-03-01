@@ -32,6 +32,7 @@ import sys
 import optparse
 import imp
 import json
+import re
 
 # Global plugin cache so we don't constantly reload the plugin modules
 global_plugins={}
@@ -163,12 +164,43 @@ def expand_item(range_list,onepass=False):
         newlist=expand_item(newlist)
     return newlist
 
-def compress(range_list):
+def compress(hostnames):
     """ Compress a list of hosts into a more compact range representation """
     # This is currently a simple stubbed out implementation that doesn't 
     # really compress at all.  This functionality isn't really needed by
     # sshmap to function.
-    return ','.join(range_list).strip(',')
+    hostnames.sort()
+    prev_dict={'prefix':"",'suffix':'','number':0}
+    items=[]
+    items_block=[]
+    for host in hostnames:
+        #print re.match(r"([^0-9]+)(\d+)(.+).?",sys.argv[1]).groups()
+        try:
+            parsed_dict=re.match(r"(?P<prefix>[^0-9]+)(?P<number>\d+)(?P<suffix>.+).?",host).groupdict()
+        except AttributeError:
+            newlist=[]
+            for host in hostnames:
+                 newlist.append(host+'.')
+            fixedlist=[]
+            for host in compress_hosts(newlist):
+                fixedlist.append(host.strip('.'))
+            return fixedlist
+        if parsed_dict['prefix']!=prev_dict['prefix'] or parsed_dict['suffix'] != prev_dict['suffix'] or int(parsed_dict['number']) != int(prev_dict['number'])+1:
+            items.append(items_block)
+            items_block=[parsed_dict]
+        else:
+            items_block.append(parsed_dict)
+        prev_dict=parsed_dict
+    items.append(items_block)
+    result=[]
+    for item in items:
+        if len(item):
+            if len(item) == 1:
+                result.append('%s%s%s' % (item[0]['prefix'],item[0]['number'],item[0]['suffix']))
+            else:
+                result.append('%s[%s-%s]%s' % (item[0]['prefix'],item[0]['number'],item[-1]['number'],item[0]['suffix']))
+    return result
+    #return ','.join(range_list).strip(',')
         
 def range_split(range):
     """ Split up a range string, this needs to separate comma separated
@@ -207,5 +239,5 @@ if __name__ == "__main__":
     if options.expand:
         print '\n'.join(expand(range,onepass=options.onepass))
     else:
-        print compress(expand(range,onepass=options.onepass))
+        print ', '.join(compress(expand(range,onepass=options.onepass)))
     

@@ -21,7 +21,7 @@ def expand(value,name=None):
   if name.lower() in ['type_vip_up']:
     mod_type='vip_up'
     filter_append='_up'
-  plugins=hostlists.hostlists._get_plugins()
+  plugins=hostlists._get_plugins()
   for plugin_name in plugins.keys():
     if ( 
       (filter_append != '' and plugin_name.endswith(filter_append)) or
