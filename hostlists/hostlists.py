@@ -33,6 +33,7 @@ import optparse
 import imp
 import json
 import re
+import socket
 
 # Global plugin cache so we don't constantly reload the plugin modules
 global_plugins={}
