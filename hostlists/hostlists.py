@@ -201,7 +201,7 @@ def compress(hostnames):
             for host in hostnames:
                  newlist.append(host+'.')
             fixedlist=[]
-            for host in compress_hosts(newlist): 
+            for host in compress(newlist): 
                 fixedlist.append(host.strip('.'))
             return fixedlist
     new_hosts=multikeysort(new_hosts,['prefix','number_int'])
@@ -252,14 +252,6 @@ def range_split(range):
     return result_list
     
 if __name__ == "__main__":
-    parser = optparse.OptionParser(usage="usage: %prog [options] plugin:parameters")
-    parser.add_option("-s","--sep",dest="sep",default=',',help="Separator character, default=\",\"")
-    parser.add_option("--onepass",dest="onepass",default=False,action="store_true")
-    parser.add_option("--expand","-e",dest="expand",default=False,action="store_true",help="Expand the host list and display one host per line")
-    (options, args) = parser.parse_args()
-    range=range_split(','.join(args))
-    if options.expand:
-        print '\n'.join(expand(range,onepass=options.onepass))
-    else:
-        print ', '.join(compress(expand(range,onepass=options.onepass)))
-    
+    # This has been moved to the hostlist script
+    pass
+        
