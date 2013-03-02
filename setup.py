@@ -18,7 +18,7 @@ from distutils.core import setup
 
 setup(
   name="sshmap",
-  version="0.4.6",
+  version="0.4.8",
   author="Dwight Hubbard",
   author_email="dhubbard@yahoo-inc.com",
   url="http://www.yahoo.com",
@@ -28,5 +28,5 @@ setup(
   scripts=["sshmap/sshmap",'hostlists/hostlists',"hostlists/hostlists.py"],
   long_description=open('README.txt').read(),
   description="A SSH Multiplexer designed to use ssh to perform map/reduce like operations",
-  requires=['paramiko'],
+  requires=['ssh','django'],
 )
