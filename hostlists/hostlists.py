@@ -170,7 +170,10 @@ def multikeysort(items, columns):
     comparers = [ ((itemgetter(col[1:].strip()), -1) if col.startswith('-') else (itemgetter(col.strip()), 1)) for col in columns]
     def comparer(left, right):
         for fn, mult in comparers:
-            result = cmp(fn(left), fn(right))
+            try:
+                result = cmp(fn(left), fn(right))
+            except KeyError:
+                return 0
             if result:
                 return mult * result
         else:
@@ -198,16 +201,15 @@ def compress(hostnames):
             parsed_dict['number_int']=int(parsed_dict['number'])
             new_hosts.append(parsed_dict)
         except AttributeError:
-            newlist=[]
-            for host in hostnames:
-                 newlist.append(host+'.')
-            fixedlist=[]
-            for host in compress(newlist): 
-                fixedlist.append(host.strip('.'))
-            return fixedlist
+            if '.' not in host:
+                host+='.'
+                parsed_dict={'host':compress([host])[0].strip('.')}
+            else:
+                parsed_dict={'host':host}
+            new_hosts.append(parsed_dict)
     new_hosts=multikeysort(new_hosts,['prefix','number_int'])
     for parsed_dict in new_hosts: 
-        if parsed_dict['prefix']!=prev_dict['prefix'] or parsed_dict['suffix'] != prev_dict['suffix'] or int(parsed_dict['number']) != int(prev_dict['number'])+1:
+        if 'host' in parsed_dict.keys() or parsed_dict['prefix']!=prev_dict['prefix'] or parsed_dict['suffix'] != prev_dict['suffix'] or int(parsed_dict['number']) != int(prev_dict['number'])+1:
             if len(items_block):
                 items.append(items_block)
             items_block=[parsed_dict]
@@ -218,7 +220,9 @@ def compress(hostnames):
     result=[]
     for item in items:
         if len(item):
-            if len(item) == 1:
+            if len(item) == 1 and 'host' in item[0].keys():
+                result.append(item[0]['host'])
+            elif len(item) == 1:
                 result.append('%s%s%s' % (item[0]['prefix'],item[0]['number'],item[0]['suffix']))
             else:
                 result.append('%s[%s-%s]%s' % (item[0]['prefix'],item[0]['number'],item[-1]['number'],item[0]['suffix']))
