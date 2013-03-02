@@ -164,6 +164,19 @@ def expand_item(range_list,onepass=False):
         newlist=expand_item(newlist)
     return newlist
 
+def multikeysort(items, columns):  
+    from operator import itemgetter
+    comparers = [ ((itemgetter(col[1:].strip()), -1) if col.startswith('-') else (itemgetter(col.strip()), 1)) for col in columns]
+    def comparer(left, right):
+        for fn, mult in comparers:
+            result = cmp(fn(left), fn(right))
+            if result:
+                return mult * result
+        else:
+            return 0
+    return sorted(items, cmp=comparer)
+
+
 def compress(hostnames):
     """ Compress a list of hosts into a more compact range representation """
     # This is currently a simple stubbed out implementation that doesn't 
@@ -173,20 +186,29 @@ def compress(hostnames):
     prev_dict={'prefix':"",'suffix':'','number':0}
     items=[]
     items_block=[]
+    new_hosts=[]
     for host in hostnames:
         #print re.match(r"([^0-9]+)(\d+)(.+).?",sys.argv[1]).groups()
         try:
             parsed_dict=re.match(r"(?P<prefix>[^0-9]+)(?P<number>\d+)(?P<suffix>.+).?",host).groupdict()
+            # To generate the range we need the entries sorted numerically but to ensure we don't
+            # loose any leading 0s we don't want to replace the number parameter that is a string
+            # with the leading 0s.
+            parsed_dict['number_int']=int(parsed_dict['number'])
+            new_hosts.append(parsed_dict)
         except AttributeError:
             newlist=[]
             for host in hostnames:
                  newlist.append(host+'.')
             fixedlist=[]
-            for host in compress_hosts(newlist):
+            for host in compress_hosts(newlist): 
                 fixedlist.append(host.strip('.'))
             return fixedlist
+    new_hosts=multikeysort(new_hosts,['prefix','number_int'])
+    for parsed_dict in new_hosts: 
         if parsed_dict['prefix']!=prev_dict['prefix'] or parsed_dict['suffix'] != prev_dict['suffix'] or int(parsed_dict['number']) != int(prev_dict['number'])+1:
-            items.append(items_block)
+            if len(items_block):
+                items.append(items_block)
             items_block=[parsed_dict]
         else:
             items_block.append(parsed_dict)
@@ -200,7 +222,7 @@ def compress(hostnames):
             else:
                 result.append('%s[%s-%s]%s' % (item[0]['prefix'],item[0]['number'],item[-1]['number'],item[0]['suffix']))
     return result
-    #return ','.join(range_list).strip(',')
+
         
 def range_split(range):
     """ Split up a range string, this needs to separate comma separated
