@@ -4,6 +4,8 @@ parallel map operations via ssh.
 
 sshmap provides 3 python modules in order to operate:
   sshmap - This module provides the multiprocessing ssh functionality
+
+The other two modules have been moved to a seperate package named hostlists
   hostlists - This module handles hostlist expansion
   hostlists_plugins - This module contains plugins that can be used
                       by the hostlists plugin to obtain lists of hosts. 
