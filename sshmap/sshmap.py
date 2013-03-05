@@ -567,22 +567,28 @@ def init_worker():
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
-def run(range, command, username = None, password = None, sudo = False, script = None, timeout = None, sort = False,
+def run(host_range, command, username = None, password = None, sudo = False, script = None, timeout = None, sort = False,
         bufsize = -1, cwd = '/tmp', jobs = None, output_callback = callback_summarize_failures, parms = None,
         shuffle = False):
     """
-    Run a command on a hostlists range of hosts
-    >>> res=run(range='localhost',command="echo ok")
+    Run a command on a hostlists host_range of hosts
+    >>> res=run(host_range='localhost',command="echo ok")
     >>> print res[0].dump()
     localhost ok  0 0 {'failures': [], 'total_host_count': 1, 'completed_host_count': 1}
     None
     """
     status_info(output_callback, 'Looking up hosts')
-    hosts = hostlists.expand(hostlists.range_split(range))
+    hosts = hostlists.expand(hostlists.range_split(host_range))
     if shuffle:
         random.shuffle(hosts)
     status_clear()
     results = ssh_results()
+        
+    if parms:
+        results.parm = parms
+    else:
+        results.parm = { }
+
     if sudo and not password:
         for host in hosts:
             result=ssh_result()
@@ -593,11 +599,7 @@ def run(range, command, username = None, password = None, sudo = False, script =
         results.parm['completed_host_count'] = 0
         results.parm['failures']=hosts
         return results    
-        
-    if parms:
-        results.parm = parms
-    else:
-        results.parm = { }
+
     if jobs < 1:
         jobs = 1
     if jobs > JOB_MAX:
