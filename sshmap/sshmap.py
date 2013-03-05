@@ -350,8 +350,11 @@ def status_info(callbacks, text):
     """
     Update the display line at the cursor
     """
-    if isinstance(callbacks, types.ListType) and callback_status_count in callbacks:
-        print >> sys.stderr, '\x1b[0G\x1b[0  %s' % text,
+    #print callbacks,text
+    #return
+    if isinstance(callbacks, list) and callback_status_count in callbacks:
+        status_clear()
+        sys.stderr.write(text)
         sys.stderr.flush()
 
 
@@ -360,7 +363,7 @@ def status_clear():
     Clear the status line (current line)
     """
     sys.stderr.write('\x1b[0G\x1b[0K')
-    sys.stderr.flush()
+    #sys.stderr.flush()
 
 # Built in callbacks
 # Filter callback handlers
