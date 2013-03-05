@@ -60,10 +60,11 @@ RUN_FAIL_CONNECT = 3
 RUN_FAIL_SSH = 4
 RUN_SUDO_PROMPT = 5
 RUN_FAIL_UNKNOWN = 6
+RUN_FAIL_NOPASSWORD=7
 
 # Text return codes
 RUN_CODES = ['Ok', 'Authentication Error', 'Timeout', 'SSH Connection Failed', 'SSH Failure',
-             'Sudo did not send a password prompt', 'Connection refused']
+             'Sudo did not send a password prompt', 'Connection refused','Sudo password required']
 
 # Configuration file field descriptions
 conf_desc = {
@@ -582,6 +583,17 @@ def run(range, command, username = None, password = None, sudo = False, script =
         random.shuffle(hosts)
     status_clear()
     results = ssh_results()
+    if sudo and not password:
+        for host in hosts:
+            result=ssh_result()
+            result.err='Sudo password required'
+            result.retcode=RUN_FAIL_NOPASSWORD
+            results.append(result)
+        results.parm['total_host_count'] = len(hosts)
+        results.parm['completed_host_count'] = 0
+        results.parm['failures']=hosts
+        return results    
+        
     if parms:
         results.parm = parms
     else:
@@ -666,6 +678,6 @@ def run(range, command, username = None, password = None, sudo = False, script =
 #   2.2 As data comes back, parse it and insert data into the out,err,rc dictionaries
 
 if __name__ == "__main__":
-    # The contents that where formerly here hae been moved to the sshmap 
+    # The contents that where formerly here have been moved to the sshmap 
     # command line utility.  
     pass
