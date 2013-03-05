@@ -5,13 +5,8 @@ parallel map operations via ssh.
 sshmap provides a python module in order to operate:
   sshmap - This module provides the multiprocessing ssh functionality
 
-The other two modules have been moved to a seperate package named hostlists
-  hostlists - This module handles hostlist expansion
-  hostlists_plugins - This module contains plugins that can be used
-                      by the hostlists plugin to obtain lists of hosts. 
-
 Dependencies
-sshmap uses one open source library.
+sshmap uses two open source modules.
 
 This file summarizes the tools used, their purpose, and the licenses under
 which they're released.
@@ -30,5 +25,4 @@ are supported.  SFTP client and server mode are both supported too.
 This is a python module for querying and managing lists of hosts from
 various systems.
 
---------
-Changelog
+[https://github.com/dwighthubbard/sshmap]
