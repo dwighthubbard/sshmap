@@ -189,6 +189,27 @@ class fastSSHClient(ssh.SSHClient):
         return stdin, stdout, stderr, chan
 
 
+def _term_readline(handle):
+    #print '_iterm_readline'
+    #print type(handle)
+    char = handle.read(1)
+    #print '%s' % (char), type(char)
+    buf = ""
+    #print '_iterm_readline: starting loop'
+    try:
+        while char:
+            #print '_item_readline: appending',type(buf),type(char)
+            buf += char
+            if char in ['\r','\n']:
+                #print '_iterm_readline - Found line', len(buf), char, buf
+                return buf
+            char = handle.read(1)
+    except Exception, message:
+        print Exception, message
+    #print '_item_readline - Exit', buf
+    return buf
+
+
 def run_command(host, command = "uname -a", username = None, password = None, sudo = False, script = None,
                 timeout = None, parms = None, client = None, bufsize = -1, cwd = '/tmp', logging = False):
     """
@@ -258,7 +279,7 @@ def run_command(host, command = "uname -a", username = None, password = None, su
     try:
     # We have to force a sudo -k first or we can't reliably know we'll be prompted for our password
         if sudo:
-            stdin, stdout, stderr, chan = client.exec_command('sudo -k;sudo "%s"' % command, timeout = timeout,
+            stdin, stdout, stderr, chan = client.exec_command('sudo -k %s' % command, timeout = timeout,
                                                               bufsize = bufsize, pty = True)
             if not chan:
                 result.ssh_retcode = RUN_FAIL_CONNECT
@@ -275,24 +296,41 @@ def run_command(host, command = "uname -a", username = None, password = None, su
         return result
     if sudo:
         try:
+            # Send the password
             stdin.write(password + '\r')
             stdin.flush()
-            prompt = stderr.readline()
-            #sys.stderr.write('prompt2: %s\n'%prompt)
+            
+            # Remove the password prompt and password from the output
+            prompt = _term_readline(stdout)
+            seen_password = False
+            seen_password_prompt = False
+            #print 'READ:',prompt
+            while 'assword:' in prompt or password in prompt or prompt in ['\n','\r']:
+                if 'assword:' in prompt:
+                    seen_password_prompt = True
+                if password in prompt:
+                    seen_password = True
+                if seen_password_prompt and seen_password:
+                    break
+                prompt = _term_readline(stdout)
+                #print 'READ:',prompt
+            prompt = _term_readline(stdout)
+            #sys.stderr.write('\rprompt2: %s\n'%prompt)
             #sys.stderr.flush()
-            prompt = stderr.readline()
+            #prompt = stderr.readline()
+            #prompt = _term_readline(stdout)
             #print 'prompt2',prompt
-            if len(prompt.strip()) == 0:
-                # We may be on a pty in which case the prompt goes to stdout
-                prompt = stdout.readline()
-                #print 'prompt3',prompt
-            if prompt.find(password) != -1:
-                prompt = stdout.readline()
-            if prompt.lower().find('password') == -1:
-                result.err = [prompt.strip()]
-                result.out = []
-                result.ssh_retcode = RUN_SUDO_PROMPT
-                return result
+            #if len(prompt.strip()) == 0:
+            #    # We may be on a pty in which case the prompt goes to stdout
+            #    prompt = stdout.readline()
+            #    print 'prompt3',prompt
+            #if prompt.find(password) != -1:
+            #    prompt = stdout.readline()
+            #if prompt.lower().find('password') == -1:
+            #    result.err = [prompt.strip()]
+            #    result.out = []
+            #    result.ssh_retcode = RUN_SUDO_PROMPT
+            #    return result
                 #stderr.readline()
         except socket.timeout:
             result.err = ['Timeout during sudo connect, likely bad password']
