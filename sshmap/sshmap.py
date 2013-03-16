@@ -61,10 +61,11 @@ RUN_FAIL_SSH = 4
 RUN_SUDO_PROMPT = 5
 RUN_FAIL_UNKNOWN = 6
 RUN_FAIL_NOPASSWORD=7
-
+RUN_FAIL_BADPASSWORD=8
 # Text return codes
 RUN_CODES = ['Ok', 'Authentication Error', 'Timeout', 'SSH Connection Failed', 'SSH Failure',
-             'Sudo did not send a password prompt', 'Connection refused','Sudo password required']
+             'Sudo did not send a password prompt', 'Connection refused','Sudo password required',
+             'Invalid sudo password']
 
 # Configuration file field descriptions
 conf_desc = {
@@ -305,16 +306,20 @@ def run_command(host, command = "uname -a", username = None, password = None, su
             seen_password = False
             seen_password_prompt = False
             #print 'READ:',prompt
-            while 'assword:' in prompt or password in prompt or prompt in ['\n','\r']:
+            while 'assword:' in prompt or password in prompt or 'try again' in prompt or len(prompt.strip()) == 0:
+                if 'try again' in prompt:
+                    result.ssh_retcode = RUN_FAIL_BADPASSWORD
+                    return result
+                prompt_new = _term_readline(stdout)
                 if 'assword:' in prompt:
                     seen_password_prompt = True
                 if password in prompt:
                     seen_password = True
                 if seen_password_prompt and seen_password:
                     break
-                prompt = _term_readline(stdout)
+                prompt = prompt_new
                 #print 'READ:',prompt
-            prompt = _term_readline(stdout)
+            #prompt = _term_readline(stdout)
             #sys.stderr.write('\rprompt2: %s\n'%prompt)
             #sys.stderr.flush()
             #prompt = stderr.readline()
