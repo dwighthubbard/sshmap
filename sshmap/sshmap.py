@@ -460,7 +460,6 @@ def callback_aggregate_output(result):
             collapsed_output[digest] = (result.out, error)
         else:
             collapsed_output[digest] = (result.out, result.err)
-
     result.parm['aggregate_hosts'] = aggregate_hosts
     if collapsed_output:
         result.parm['collapsed_output'] = collapsed_output
@@ -513,8 +512,8 @@ def callback_status_count(result):
     chunksize = result.setting('chunksize')
     if not chunksize:
         chunksize = 1
-    sys.stderr.write('\x1b[0G\x1b[0K%s/%s (%d commands per process)' % (
-        result.setting('completed_host_count'), result.setting('total_host_count'), chunksize))
+    sys.stderr.write('\x1b[0G\x1b[0K%s/%s' % (
+        result.setting('completed_host_count'), result.setting('total_host_count')))
     sys.stderr.flush()
     return result
 
@@ -671,7 +670,9 @@ def run(host_range, command, username = None, password = None, sudo = False, scr
 
     status_clear()
     status_info(output_callback, 'Sending %d commands to each process' % chunksize)
-
+    if callback_status_count in output_callback:
+        callback_status_count(ssh_result(parm = results.parm))
+        
     try:
         for result in map_command(run_command,
                                   [(host, command, username, password, sudo, script, timeout, results.parm, client) for
