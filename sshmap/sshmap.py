@@ -318,25 +318,6 @@ def run_command(host, command = "uname -a", username = None, password = None, su
                 if seen_password_prompt and seen_password:
                     break
                 prompt = prompt_new
-                #print 'READ:',prompt
-            #prompt = _term_readline(stdout)
-            #sys.stderr.write('\rprompt2: %s\n'%prompt)
-            #sys.stderr.flush()
-            #prompt = stderr.readline()
-            #prompt = _term_readline(stdout)
-            #print 'prompt2',prompt
-            #if len(prompt.strip()) == 0:
-            #    # We may be on a pty in which case the prompt goes to stdout
-            #    prompt = stdout.readline()
-            #    print 'prompt3',prompt
-            #if prompt.find(password) != -1:
-            #    prompt = stdout.readline()
-            #if prompt.lower().find('password') == -1:
-            #    result.err = [prompt.strip()]
-            #    result.out = []
-            #    result.ssh_retcode = RUN_SUDO_PROMPT
-            #    return result
-                #stderr.readline()
         except socket.timeout:
             result.err = ['Timeout during sudo connect, likely bad password']
             result.ssh_retcode = RUN_FAIL_TIMEOUT
@@ -612,7 +593,7 @@ def init_worker():
 
 def run(host_range, command, username = None, password = None, sudo = False, script = None, timeout = None, sort = False,
         bufsize = -1, cwd = '/tmp', jobs = None, output_callback = callback_summarize_failures, parms = None,
-        shuffle = False):
+        shuffle = False, chunksize = None):
     """
     Run a command on a hostlists host_range of hosts
     >>> res=run(host_range='localhost',command="echo ok")
@@ -665,15 +646,17 @@ def run(host_range, command, username = None, password = None, sudo = False, scr
         jobs = len(hosts)
 
     pool = multiprocessing.Pool(processes = jobs, initializer = init_worker)
-    if jobs >= len(hosts):
+    if not chunksize:
         chunksize = 1
-    else:
-        chunksize = int(len(hosts) / jobs) - 1
-    if chunksize < 1:
-        chunksize = 1
+        if jobs >= len(hosts):
+            chunksize = 1
+        else:
+            chunksize = int(len(hosts) / jobs) - 1
+        if chunksize < 1:
+            chunksize = 1
 
-    if chunksize > 10:
-        chunksize = 10
+        if chunksize > 10:
+            chunksize = 10
 
     results.parm['chunksize'] = chunksize
     if sort:
@@ -692,7 +675,7 @@ def run(host_range, command, username = None, password = None, sudo = False, scr
     try:
         for result in map_command(run_command,
                                   [(host, command, username, password, sudo, script, timeout, results.parm, client) for
-                                   host in hosts], len(hosts) / jobs):
+                                   host in hosts], chunksize):
             #results.parm['active_processes']=len(multiprocessing.active_children())
             results.parm['completed_host_count'] += 1
             result.parm = results.parm
