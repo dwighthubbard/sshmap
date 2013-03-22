@@ -1,6 +1,6 @@
 #!/usr/bin/python
-import os
 from distutils.core import setup
+#noinspection PyStatementEffect
 """
  Copyright (c) 2012 Yahoo! Inc. All rights reserved.
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,16 +17,15 @@ from distutils.core import setup
 """
 
 setup(
-  name="sshmap",
-  version="0.3.2",
-  author="Dwight Hubbard",
-  author_email="dhubbard@yahoo-inc.com",
-  url="http://www.yahoo.com",
-  license="LICENSE.txt",
-  packages=["sshmap","hostlists"],
-  data_files=[('/usr/lib/hostlists/plugins',['hostlists_plugins/file.py','hostlists_plugins/dns.py','hostlists_plugins/dnsip.py','hostlists_plugins/range.py','hostlists_plugins/haproxy.py'])],
-  scripts=["sshmap/sshmap",'hostlists/hostlists'],
-  long_description=open('README.txt').read(),
-  description="A SSH Multiplexer designed to use ssh to perform map/reduce like operations",
-  requires=['paramiko'],
+  name = "sshmap",
+  version = "0.5.6",
+  author = "Dwight Hubbard",
+  author_email = "dhubbard@yahoo-inc.com",
+  url = "https://github.com/dwighthubbard/sshmap",
+  license = "LICENSE.txt",
+  packages = ["sshmap"],
+  scripts = ["sshmap/sshmap"],
+  long_description = open('README.txt').read(),
+  description = "A SSH Multiplexer designed to use ssh to perform map/reduce like operations",
+  requires = ['ssh','hostlists','django'],
 )
