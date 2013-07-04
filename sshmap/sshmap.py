@@ -497,6 +497,7 @@ def callback_filter_base64(result):
     result.err = [base64.b64encode(result.err_string)]
     return result
 
+
 #Status callback handlers
 def callback_status_count(result):
     """
@@ -509,6 +510,7 @@ def callback_status_count(result):
         result.setting('completed_host_count'), result.setting('total_host_count')))
     sys.stderr.flush()
     return result
+
 
 #Output callback handlers
 def callback_output_prefix_host(result):
@@ -610,7 +612,7 @@ def run(host_range, command, username=None, password=None, sudo=False, script=No
         for host in hosts:
             result=ssh_result()
             result.err='Sudo password required'
-            result.retcode=RUN_FAIL_NOPASSWORD
+            result.retcode = RUN_FAIL_NOPASSWORD
             results.append(result)
         results.parm['total_host_count'] = len(hosts)
         results.parm['completed_host_count'] = 0
