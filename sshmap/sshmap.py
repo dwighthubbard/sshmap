@@ -64,7 +64,7 @@ RUN_FAIL_BADPASSWORD = 8
 
 # Text return codes
 RUN_CODES = ['Ok', 'Authentication Error', 'Timeout', 'SSH Connection Failed', 'SSH Failure',
-             'Sudo did not send a password prompt', 'Connection refused','Sudo password required',
+             'Sudo did not send a password prompt', 'Connection refused', 'Sudo password required',
              'Invalid sudo password']
 
 # Configuration file field descriptions
@@ -160,7 +160,7 @@ class ssh_results(list):
     def dump(self):
         """ Dump all the result objects """
         for item in self.__iter__():
-            item.dump(return_parm = False, return_retcode = False)
+            item.dump(return_parm=False, return_retcode=False)
         print self.parm
 
     def print_output(self, summarize_failures=False):
@@ -282,7 +282,7 @@ def run_command(host, command="uname -a", username=None, password=None, sudo=Fal
                 result.ssh_retcode = RUN_FAIL_CONNECT
                 return result
         else:
-            stdin, stdout, stderr, chan=client.exec_command(command, timeout=timeout, bufsize=bufsize)
+            stdin, stdout, stderr, chan = client.exec_command(command, timeout=timeout, bufsize=bufsize)
             if not chan:
                 result.ssh_retcode = RUN_FAIL_CONNECT
                 result.err = ["WTF, this shouldn't happen\n"]
@@ -353,7 +353,7 @@ def run_command(host, command="uname -a", username=None, password=None, sudo=Fal
 
 
 # Handy utility functions
-def get_parm_val(parm = None, key = None):
+def get_parm_val(parm=None, key=None):
     """
     Return the value of a key
 
@@ -418,6 +418,7 @@ def callback_summarize_failures(result):
 def callback_exec_command(result):
     """
     Builtin Callback, pass the results to a command/script
+    :param result:
     """
     script = result.setting("callback_script")
     if not script:
@@ -500,12 +501,10 @@ def callback_filter_base64(result):
 def callback_status_count(result):
     """
     Builtin Callback, show the count complete/remaining
+    :param result:
       """
     # The master process inserts the status into the
     # total_host_count and completed_host_count variables
-    chunksize = result.setting('chunksize')
-    if not chunksize:
-        chunksize = 1
     sys.stderr.write('\x1b[0G\x1b[0K%s/%s' % (
         result.setting('completed_host_count'), result.setting('total_host_count')))
     sys.stderr.flush()
