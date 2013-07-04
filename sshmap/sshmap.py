@@ -32,7 +32,6 @@ import random
 import signal
 import hashlib
 import json
-from optparse import OptionParser
 import multiprocessing
 import subprocess
 
@@ -60,8 +59,9 @@ RUN_FAIL_CONNECT = 3
 RUN_FAIL_SSH = 4
 RUN_SUDO_PROMPT = 5
 RUN_FAIL_UNKNOWN = 6
-RUN_FAIL_NOPASSWORD=7
-RUN_FAIL_BADPASSWORD=8
+RUN_FAIL_NOPASSWORD = 7
+RUN_FAIL_BADPASSWORD = 8
+
 # Text return codes
 RUN_CODES = ['Ok', 'Authentication Error', 'Timeout', 'SSH Connection Failed', 'SSH Failure',
              'Sudo did not send a password prompt', 'Connection refused','Sudo password required',
@@ -87,7 +87,7 @@ from multiprocessing.pool import IMapIterator
 
 
 def wrapper(func):
-    def wrap(self, timeout = None):
+    def wrap(self, timeout=None):
         return func(self, timeout=timeout if timeout is not None else 1e100)
 
     return wrap
@@ -102,9 +102,11 @@ class ssh_result:
     to all the callback functions.
     """
 
-    def __init__(self, out = None, err = None, host = None, retcode = 0, ssh_ret = 0, parm = None):
-        if not err: err = []
-        if not out: out = []
+    def __init__(self, out=None, err=None, host=None, retcode=0, ssh_ret=0, parm=None):
+        if not err:
+            err = []
+        if not out:
+            out = []
         self.out = out
         self.err = err
         self.retcode = retcode
@@ -128,7 +130,7 @@ class ssh_result:
         """ Return the ssh_error_message for the error code """
         return RUN_CODES[self.ssh_retcode]
 
-    def dump(self, return_parm = True, return_retcode = True):
+    def dump(self, return_parm=True, return_retcode=True):
         """ Print all our public values """
         print self.host, self.out_string().replace('\n', ''), self.err_string().replace('\n', ''),
         if return_retcode:
@@ -161,7 +163,7 @@ class ssh_results(list):
             item.dump(return_parm = False, return_retcode = False)
         print self.parm
 
-    def print_output(self, summarize_failures = False):
+    def print_output(self, summarize_failures=False):
         """ Print all the objects """
         for item in self.__iter__():
             item.print_output()
@@ -178,7 +180,7 @@ class ssh_results(list):
 class fastSSHClient(ssh.SSHClient):
     """ ssh SSHClient class extended with timeout support """
 
-    def exec_command(self, command, bufsize = -1, timeout = None, pty = False):
+    def exec_command(self, command, bufsize=-1, timeout=None, pty=False):
         chan = self._transport.open_session()
         chan.settimeout(timeout)
         if pty:
@@ -201,7 +203,7 @@ def _term_readline(handle):
         while char:
             #print '_item_readline: appending',type(buf),type(char)
             buf += char
-            if char in ['\r','\n']:
+            if char in ['\r', '\n']:
                 #print '_iterm_readline - Found line', len(buf), char, buf
                 return buf
             char = handle.read(1)
@@ -211,8 +213,8 @@ def _term_readline(handle):
     return buf
 
 
-def run_command(host, command = "uname -a", username = None, password = None, sudo = False, script = None,
-                timeout = None, parms = None, client = None, bufsize = -1, cwd = '/tmp', logging = False):
+def run_command(host, command="uname -a", username=None, password=None, sudo=False, script=None, timeout=None,
+                parms=None, client=None, bufsize=-1, cwd='/tmp', logging=False):
     """
     Run a command or script on a remote node via ssh
     """
@@ -235,7 +237,7 @@ def run_command(host, command = "uname -a", username = None, password = None, su
             script_parameters = None
 
     # Get a result object to put our output in
-    result = ssh_result(host = host, parm = parms)
+    result = ssh_result(host=host, parm=parms)
 
     if logging:
         ssh.util.log_to_file('ssh.log')
@@ -255,7 +257,7 @@ def run_command(host, command = "uname -a", username = None, password = None, su
         close_client = True
         # noinspection PyBroadException
     try:
-        client.connect(host, username = username, password = password, timeout = timeout)
+        client.connect(host, username=username, password=password, timeout=timeout)
     except ssh.AuthenticationException:
         result.ssh_retcode = RUN_FAIL_AUTH
         return result
@@ -269,24 +271,18 @@ def run_command(host, command = "uname -a", username = None, password = None, su
         result.ssh_retcode = RUN_FAIL_CONNECT
         return result
     except Exception, message:
-        #inf=sys.exc_info()
-        #print 'Unknown error',inf[0:2]
-        #print traceback.print_tb(inf[2])
-        #print "*********************************************"
-        #print "Got unexpected result from ssh client connect", message
-        #print "*********************************************"
         result.ssh_retcode = RUN_FAIL_UNKNOWN
         return result
     try:
     # We have to force a sudo -k first or we can't reliably know we'll be prompted for our password
         if sudo:
-            stdin, stdout, stderr, chan = client.exec_command('sudo -k %s' % command, timeout = timeout,
-                                                              bufsize = bufsize, pty = True)
+            stdin, stdout, stderr, chan = client.exec_command('sudo -k %s' % command, timeout=timeout, bufsize=bufsize,
+                                                              pty=True)
             if not chan:
                 result.ssh_retcode = RUN_FAIL_CONNECT
                 return result
         else:
-            stdin, stdout, stderr, chan = client.exec_command(command, timeout = timeout, bufsize = bufsize)
+            stdin, stdout, stderr, chan=client.exec_command(command, timeout=timeout, bufsize=bufsize)
             if not chan:
                 result.ssh_retcode = RUN_FAIL_CONNECT
                 result.err = ["WTF, this shouldn't happen\n"]
@@ -355,6 +351,7 @@ def run_command(host, command = "uname -a", username = None, password = None, su
     result.ssh_retcode = RUN_OK
     return result
 
+
 # Handy utility functions
 def get_parm_val(parm = None, key = None):
     """
@@ -389,6 +386,7 @@ def status_clear():
     """
     sys.stderr.write('\x1b[0G\x1b[0K')
     #sys.stderr.flush()
+
 
 # Built in callbacks
 # Filter callback handlers
@@ -438,10 +436,10 @@ def callback_aggregate_output(result):
     """ Builtin Callback, Aggregate identical results """
     aggregate_hosts = result.setting('aggregate_hosts')
     if not aggregate_hosts:
-        aggregate_hosts = { }
+        aggregate_hosts = {}
     collapsed_output = result.setting('collapsed_output')
     if not collapsed_output:
-        collapsed_output = { }
+        collapsed_output = {}
     h = hashlib.md5()
     h.update(result.out_string())
     h.update(result.err_string())
@@ -472,7 +470,7 @@ def callback_filter_match(result):
     similar to grep
     """
     if result.out_string().find(result.setting('match')) == -1 and result.err_string().find(
-        result.setting('match')) == -1:
+            result.setting('match')) == -1:
         result.out = ''
         result.err = ''
     return result
@@ -505,10 +503,6 @@ def callback_status_count(result):
       """
     # The master process inserts the status into the
     # total_host_count and completed_host_count variables
-    #print >> sys.stderr,'\x1b[0G\x1b[0K%s/%s'%(get_parm_val(parm,'completed_host_count'),get_parm_val(parm,'total_host_count')),
-    #active_processes=result.setting('active_processes')
-    #if not active_processes:
-    #  active_processes=0
     chunksize = result.setting('chunksize')
     if not chunksize:
         chunksize = 1
@@ -521,6 +515,7 @@ def callback_status_count(result):
 def callback_output_prefix_host(result):
     """
     Builtin Callback, print the output with the hostname: prefixed to each line
+    :param result:
 
     >>> result=callback_output_prefix_host(ssh_result(['out'],['err'], 'hostname', 0))
     hostname: out
@@ -552,7 +547,7 @@ def callback_output_prefix_host(result):
                 error.append('%s:%s Error: %s\n' % (result.host, rc, line.strip()))
     if result.setting('output'):
         if not len(result.out_string()) and not len(result.err_string()) and not result.setting(
-            'only_output') and result.setting('print_rc'):
+                'only_output') and result.setting('print_rc'):
             print '%s:%s' % (result.host, rc)
         sys.stdout.flush()
         sys.stderr.flush()
@@ -561,7 +556,7 @@ def callback_output_prefix_host(result):
     return result
 
 
-def read_conf(key = None, prompt = True):
+def read_conf(key=None, prompt=True):
     """ Read settings from the config file """
     try:
         conf = json.load(open(os.path.expanduser('~/.sshmap.conf'), 'r'))
@@ -590,9 +585,9 @@ def init_worker():
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
-def run(host_range, command, username = None, password = None, sudo = False, script = None, timeout = None, sort = False,
-        bufsize = -1, cwd = '/tmp', jobs = None, output_callback = callback_summarize_failures, parms = None,
-        shuffle = False, chunksize = None):
+def run(host_range, command, username=None, password=None, sudo=False, script=None, timeout=None, sort=False,
+        bufsize=-1, cwd='/tmp', jobs=None, output_callback=callback_summarize_failures, parms=None, shuffle=False,
+        chunksize=None):
     """
     Run a command on a hostlists host_range of hosts
     >>> res=run(host_range='localhost',command="echo ok")
@@ -620,7 +615,7 @@ def run(host_range, command, username = None, password = None, sudo = False, scr
             results.append(result)
         results.parm['total_host_count'] = len(hosts)
         results.parm['completed_host_count'] = 0
-        results.parm['failures']=hosts
+        results.parm['failures'] = hosts
         return results    
 
     if jobs < 1:
@@ -664,7 +659,7 @@ def run(host_range, command, username = None, password = None, sudo = False, scr
         map_command = pool.imap_unordered
 
     if isinstance(output_callback, types.ListType) and callback_status_count in output_callback:
-        callback_status_count(ssh_result(parm = results.parm))
+        callback_status_count(ssh_result(parm=results.parm))
 
     # Create a process pool and pass the parameters to it
 
