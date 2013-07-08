@@ -142,17 +142,17 @@ class ssh_result:
     def print_output(self):
         """ Print output from the commands """
         for line in self.out:
-            print '%s:' % self.host, line.strip()
+            print('%s: %s' % (self.host, line.strip()))
         for line in self.err:
-            print '%s:' % self.host, line.strip()
+            print('%s: %s' % (self.host, line.strip()))
 
 
 class ssh_results(list):
     """
-    ssh_results class, provides 2 things, an iterator to iterate over ssh_result objects
-    and a single variable parm which contains the parm parameter after the completion of
-    all the result objects (the parm variable contains the global variables used and
-    provided by the callbacks)
+    ssh_results class, provides 2 things, an iterator to iterate over
+    ssh_result objects and a single variable parm which contains the parm
+    parameter after the completion of all the result objects (the parm
+    variable contains the global variables used and provided by the callbacks)
     """
     parm = None
 
@@ -168,32 +168,39 @@ class ssh_results(list):
             item.print_output()
         if summarize_failures:
             if len(self.parm['failures']):
-                print 'SSH Failures:', ','.join(self.parm['failures']).strip(',')
+                print(
+                    'SSH Failures: %s' % ','.join(
+                        self.parm['failures']).strip(',')
+                )
 
     def setting(self, key):
-        """ Get a setting from the parm dict or return None if it doesn't exist """
+        """
+        Get a setting from the parm dict or return None if it doesn't exist
+        """
         return get_parm_val(self.parm, key)
 
 
 def agent_auth(transport, username):
     """
     Attempt to authenticate to the given transport using any of the private
-    keys available from an SSH agent or from a local private RSA key file (assumes no pass phrase).
+    keys available from an SSH agent or from a local private RSA key file
+    (assumes no pass phrase).
     """
 
     agent = ssh.Agent()
-    agent_keys = agent.get_keys() + (k,)
+    agent_keys = agent.get_keys()
     if len(agent_keys) == 0:
         return
 
     for key in agent_keys:
-        logging.info('Trying ssh-agent key %s' % key.get_fingerprint().encode('hex'))
+        logging.info(
+            'Trying ssh-agent key %s' % key.get_fingerprint().encode('hex'))
         try:
             transport.auth_publickey(username, key)
-            logging('... success!')
+            logging.debug('agent_auth success!')
             return
-        except paramiko.SSHException, e:
-            logging('... failed!', e)
+        except ssh.SSHException as e:
+            logging.debug('agent_auth failed! %s', e)
 
 
 # A version of the ssh.SSHClient that supports timeout
