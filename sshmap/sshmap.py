@@ -35,6 +35,7 @@ import json
 from optparse import OptionParser
 import multiprocessing
 import subprocess
+import logging
 
 # Imports from external python extension modules
 import ssh
@@ -172,6 +173,27 @@ class ssh_results(list):
     def setting(self, key):
         """ Get a setting from the parm dict or return None if it doesn't exist """
         return get_parm_val(self.parm, key)
+
+
+def agent_auth(transport, username):
+    """
+    Attempt to authenticate to the given transport using any of the private
+    keys available from an SSH agent or from a local private RSA key file (assumes no pass phrase).
+    """
+
+    agent = ssh.Agent()
+    agent_keys = agent.get_keys() + (k,)
+    if len(agent_keys) == 0:
+        return
+
+    for key in agent_keys:
+        logging.info('Trying ssh-agent key %s' % key.get_fingerprint().encode('hex'))
+        try:
+            transport.auth_publickey(username, key)
+            logging('... success!')
+            return
+        except paramiko.SSHException, e:
+            logging('... failed!', e)
 
 
 # A version of the ssh.SSHClient that supports timeout
