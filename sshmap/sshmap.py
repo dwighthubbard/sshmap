@@ -728,12 +728,6 @@ def run(host_range, command, username=None, password=None, sudo=False, script=No
         status_clear()
     return results
 
-# TODO Distributed ssh execution
-# Method:
-#   1. Parse config for regular expressions to map hostnames to admin host
-#   2. For each adminhost
-#   2.1 ssh to addmin host sshmap --output_base64 --output_json hosts command
-#   2.2 As data comes back, parse it and insert data into the out,err,rc dictionaries
 
 if __name__ == "__main__":
     # The contents that where formerly here have been moved to the sshmap 
