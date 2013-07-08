@@ -63,8 +63,10 @@ RUN_FAIL_NOPASSWORD = 7
 RUN_FAIL_BADPASSWORD = 8
 
 # Text return codes
-RUN_CODES = ['Ok', 'Authentication Error', 'Timeout', 'SSH Connection Failed', 'SSH Failure',
-             'Sudo did not send a password prompt', 'Connection refused', 'Sudo password required',
+RUN_CODES = ['Ok', 'Authentication Error', 'Timeout', 'SSH Connection Failed',
+             'SSH Failure',
+             'Sudo did not send a password prompt', 'Connection refused',
+             'Sudo password required',
              'Invalid sudo password']
 
 # Configuration file field descriptions
@@ -102,7 +104,8 @@ class ssh_result:
     to all the callback functions.
     """
 
-    def __init__(self, out=None, err=None, host=None, retcode=0, ssh_ret=0, parm=None):
+    def __init__(self, out=None, err=None, host=None, retcode=0, ssh_ret=0,
+                 parm=None):
         if not err:
             err = []
         if not out:
@@ -123,7 +126,9 @@ class ssh_result:
         return ''.join(self.err)
 
     def setting(self, key):
-        """ Get a setting from the parm dict or return None if it doesn't exist """
+        """
+        Get a setting from the parm dict or return None if it doesn't exist
+        """
         return get_parm_val(self.parm, key)
 
     def ssh_error_message(self):
