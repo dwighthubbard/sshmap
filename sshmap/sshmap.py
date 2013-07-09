@@ -414,6 +414,7 @@ def run_command(host, command="uname -a", username=None, password=None,
                 if not skip:
                     err.append(el)
                 skip = False
+            result.err = err
 
         #print result.err
         result.retcode = chan.recv_exit_status()
