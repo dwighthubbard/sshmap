@@ -400,9 +400,11 @@ def run_command(host, command="uname -a", username=None, password=None,
         if sudo:
             prompt = _term_readline(stderr)
             if prompt and 'assword' not in prompt and password not in prompt:
+                print 'Removing prompt', prompt.strip()
                 result.err.append(prompt)
             prompt = _term_readline(stderr)
             if prompt and 'assword' not in prompt and password not in prompt:
+                print 'Removing prompt', prompt.strip()
                 result.err.append(prompt)
             #prompt = _term_readline(stderr)
 
