@@ -397,17 +397,6 @@ def run_command(host, command="uname -a", username=None, password=None,
             stdin.write(open(script, 'r').read())
         stdin.flush()
         stdin.channel.shutdown_write()
-        if sudo:
-            prompt = _term_readline(stderr)
-            if prompt and 'assword' not in prompt and password not in prompt:
-                print 'Removing prompt', prompt.strip()
-                result.err.append(prompt)
-            prompt = _term_readline(stderr)
-            if prompt and 'assword' not in prompt and password not in prompt:
-                print 'Removing prompt', prompt.strip()
-                result.err.append(prompt)
-            #prompt = _term_readline(stderr)
-
     try:
         # Read the output from stdout,stderr and close the connection
         result.out = result.out + stdout.readlines()
