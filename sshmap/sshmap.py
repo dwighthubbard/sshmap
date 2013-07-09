@@ -399,6 +399,22 @@ def run_command(host, command="uname -a", username=None, password=None,
         # Read the output from stdout,stderr and close the connection
         result.out = stdout.readlines()
         result.err = stderr.readlines()
+        if sudo:
+            # Remove any passwords or prompts from the start of the stderr
+            # output
+            err = []
+            check_prompt = True
+            skip = False
+            for el in result.err:
+                if check_prompt:
+                    if password in el or 'assword:' in el:
+                        skip = True
+                    else:
+                        check_prompt = False
+                if not skip:
+                    err.append(el)
+                skip = False
+
         #print result.err
         result.retcode = chan.recv_exit_status()
         if close_client:
