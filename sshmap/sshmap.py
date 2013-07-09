@@ -214,6 +214,14 @@ class fastSSHClient(ssh.SSHClient):
     """ ssh SSHClient class extended with timeout support """
 
     def exec_command(self, command, bufsize=-1, timeout=None, pty=False):
+        """
+        Execute a command
+        :param command:
+        :param bufsize:
+        :param timeout:
+        :param pty:
+        :return:
+        """
         chan = self._transport.open_session()
         chan.settimeout(timeout)
         if pty:
@@ -226,30 +234,36 @@ class fastSSHClient(ssh.SSHClient):
 
 
 def _term_readline(handle):
-    #print '_iterm_readline'
-    #print type(handle)
     char = handle.read(1)
-    #print '%s' % (char), type(char)
     buf = ""
-    #print '_iterm_readline: starting loop'
     try:
         while char:
-            #print '_item_readline: appending',type(buf),type(char)
             buf += char
             if char in ['\r', '\n']:
-                #print '_iterm_readline - Found line', len(buf), char, buf
                 return buf
             char = handle.read(1)
     except Exception, message:
         print Exception, message
-    #print '_item_readline - Exit', buf
     return buf
 
 
-def run_command(host, command="uname -a", username=None, password=None, sudo=False, script=None, timeout=None,
-                parms=None, client=None, bufsize=-1, cwd='/tmp', logging=False):
+def run_command(host, command="uname -a", username=None, password=None,
+                sudo=False, script=None, timeout=None, parms=None, client=None,
+                bufsize=-1, cwd='/tmp', logging=False):
     """
     Run a command or script on a remote node via ssh
+    :param host:
+    :param command:
+    :param username:
+    :param password:
+    :param sudo:
+    :param script:
+    :param timeout:
+    :param parms:
+    :param client:
+    :param bufsize:
+    :param cwd:
+    :param logging:
     """
     # Guess any parameters not passed that can be
     if isinstance(host, types.TupleType):
@@ -290,7 +304,8 @@ def run_command(host, command="uname -a", username=None, password=None, sudo=Fal
         close_client = True
         # noinspection PyBroadException
     try:
-        client.connect(host, username=username, password=password, timeout=timeout)
+        client.connect(host, username=username, password=password,
+                       timeout=timeout)
     except ssh.AuthenticationException:
         result.ssh_retcode = RUN_FAIL_AUTH
         return result
@@ -307,15 +322,19 @@ def run_command(host, command="uname -a", username=None, password=None, sudo=Fal
         result.ssh_retcode = RUN_FAIL_UNKNOWN
         return result
     try:
-    # We have to force a sudo -k first or we can't reliably know we'll be prompted for our password
+    # We have to force a sudo -k first or we can't reliably know we'll be
+    # prompted for our password
         if sudo:
-            stdin, stdout, stderr, chan = client.exec_command('sudo -k %s' % command, timeout=timeout, bufsize=bufsize,
-                                                              pty=True)
+            stdin, stdout, stderr, chan = client.exec_command(
+                'sudo -k -S %s' % command,
+                timeout=timeout, bufsize=bufsize, pty=True
+            )
             if not chan:
                 result.ssh_retcode = RUN_FAIL_CONNECT
                 return result
         else:
-            stdin, stdout, stderr, chan = client.exec_command(command, timeout=timeout, bufsize=bufsize)
+            stdin, stdout, stderr, chan = client.exec_command(
+                command, timeout=timeout, bufsize=bufsize)
             if not chan:
                 result.ssh_retcode = RUN_FAIL_CONNECT
                 result.err = ["WTF, this shouldn't happen\n"]
@@ -335,7 +354,8 @@ def run_command(host, command="uname -a", username=None, password=None, sudo=Fal
             seen_password = False
             seen_password_prompt = False
             #print 'READ:',prompt
-            while 'assword:' in prompt or password in prompt or 'try again' in prompt or len(prompt.strip()) == 0:
+            while 'assword:' in prompt or password in prompt or \
+                    'try again' in prompt or len(prompt.strip()) == 0:
                 if 'try again' in prompt:
                     result.ssh_retcode = RUN_FAIL_BADPASSWORD
                     return result
@@ -352,8 +372,8 @@ def run_command(host, command="uname -a", username=None, password=None, sudo=Fal
             result.ssh_retcode = RUN_FAIL_TIMEOUT
             return result
     if script:
-        # Pass the script over stdin and close the channel so the receving end gets an EOF
-        # process it as a django template with the arguments passed
+        # Pass the script over stdin and close the channel so the receving end
+        # gets an EOF process it as a django template with the arguments passed
         # noinspection PyBroadException
         try:
             import django.template
@@ -367,7 +387,7 @@ def run_command(host, command="uname -a", username=None, password=None, sudo=Fal
             else:
                 c = django.template.Context({ })
             stdin.write(django.template.Template(template).render(c))
-        except Exception, e:
+        except Exception as e:
             stdin.write(open(script, 'r').read())
         stdin.flush()
         stdin.channel.shutdown_write()
@@ -457,12 +477,18 @@ def callback_exec_command(result):
     if not script:
         return result
     status_clear()
-    result_out, result_err = subprocess.Popen(script + " " + result.host, shell = True, stdin = subprocess.PIPE,
-                                              stdout = subprocess.PIPE, stderr = subprocess.PIPE).communicate(
-        result.out_string() + result.err_string())
+    result_out, result_err = subprocess.Popen(
+        script + " " + result.host,
+        shell=True,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    ).communicate(
+        result.out_string() + result.err_string()
+    )
     result.out = [result_out]
     result.err = [result_err]
-    print result.out_string()
+    print(result.out_string())
     return result
 
 
@@ -500,11 +526,13 @@ def callback_aggregate_output(result):
 
 def callback_filter_match(result):
     """
-    Builtin Callback, remove all output if the string is not found in the output
+    Builtin Callback, remove all output if the string is not found in the
+    output
     similar to grep
+    :param result:
     """
-    if result.out_string().find(result.setting('match')) == -1 and result.err_string().find(
-            result.setting('match')) == -1:
+    if result.out_string().find(result.setting('match')) == -1 and \
+            result.err_string().find(result.setting('match')) == -1:
         result.out = ''
         result.err = ''
     return result
@@ -540,7 +568,8 @@ def callback_status_count(result):
     # The master process inserts the status into the
     # total_host_count and completed_host_count variables
     sys.stderr.write('\x1b[0G\x1b[0K%s/%s' % (
-        result.setting('completed_host_count'), result.setting('total_host_count')))
+        result.setting('completed_host_count'),
+        result.setting('total_host_count')))
     sys.stderr.flush()
     return result
 
@@ -563,7 +592,8 @@ def callback_output_prefix_host(result):
     if result.setting('summarize_failed') and result.ssh_retcode:
         return result
     if result.setting('print_rc'):
-        rc = ' SSH_Returncode: %d\tCommand_Returncode: %d' % (result.ssh_retcode, result.retcode)
+        rc = ' SSH_Returncode: %d\tCommand_Returncode: %d' % (
+            result.ssh_retcode, result.retcode)
     else:
         rc = ''
     if result.ssh_retcode:
@@ -619,15 +649,32 @@ def init_worker():
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
-def run(host_range, command, username=None, password=None, sudo=False, script=None, timeout=None, sort=False,
-        bufsize=-1, cwd='/tmp', jobs=None, output_callback=callback_summarize_failures, parms=None, shuffle=False,
-        chunksize=None):
+def run(host_range, command, username=None, password=None, sudo=False,
+        script=None, timeout=None, sort=False, bufsize=-1, cwd='/tmp',
+        jobs=None, output_callback=callback_summarize_failures, parms=None,
+        shuffle=False, chunksize=None):
     """
     Run a command on a hostlists host_range of hosts
+    :param host_range:
+    :param command:
+    :param username:
+    :param password:
+    :param sudo:
+    :param script:
+    :param timeout:
+    :param sort:
+    :param bufsize:
+    :param cwd:
+    :param jobs:
+    :param output_callback:
+    :param parms:
+    :param shuffle:
+    :param chunksize:
+
     >>> res=run(host_range='localhost',command="echo ok")
-    >>> print res[0].dump()
-    localhost ok  0 0 {'failures': [], 'total_host_count': 1, 'completed_host_count': 1}
-    None
+    >>> print(res[0].dump())
+    localhost ok  0 0 {'failures': [], 'total_host_count': 1,
+    'completed_host_count': 1}
     """
     status_info(output_callback, 'Looking up hosts')
     hosts = hostlists.expand(hostlists.range_split(host_range))
@@ -673,7 +720,7 @@ def run(host_range, command, username=None, password=None, sudo=False, script=No
     if jobs > len(hosts):
         jobs = len(hosts)
 
-    pool = multiprocessing.Pool(processes = jobs, initializer = init_worker)
+    pool = multiprocessing.Pool(processes=jobs, initializer=init_worker)
     if not chunksize:
         chunksize = 1
         if jobs >= len(hosts):
@@ -692,21 +739,28 @@ def run(host_range, command, username=None, password=None, sudo=False, script=No
     else:
         map_command = pool.imap_unordered
 
-    if isinstance(output_callback, types.ListType) and callback_status_count in output_callback:
+    if isinstance(output_callback, types.ListType) and \
+            callback_status_count in output_callback:
         callback_status_count(ssh_result(parm=results.parm))
 
     # Create a process pool and pass the parameters to it
 
     status_clear()
-    status_info(output_callback, 'Sending %d commands to each process' % chunksize)
+    status_info(
+        output_callback, 'Sending %d commands to each process' % chunksize)
     if callback_status_count in output_callback:
         callback_status_count(ssh_result(parm=results.parm))
         
     try:
-        for result in map_command(run_command,
-                                  [(host, command, username, password, sudo, script, timeout, results.parm, client) for
-                                   host in hosts], chunksize):
-            #results.parm['active_processes']=len(multiprocessing.active_children())
+        for result in map_command(
+            run_command,
+            [
+                (
+                    host, command, username, password, sudo, script, timeout,
+                    results.parm, client
+                ) for host in hosts
+            ],
+            chunksize):
             results.parm['completed_host_count'] += 1
             result.parm = results.parm
             if isinstance(output_callback, types.ListType):
@@ -718,13 +772,14 @@ def run(host_range, command, username=None, password=None, sudo=False, script=No
             results.append(result)
         pool.close()
     except KeyboardInterrupt:
-        print 'ctrl-c pressed'
+        print('ctrl-c pressed')
         pool.terminate()
-        #except Exception,e:
+        #except Exception as e:
     #  print 'unknown error encountered',Exception,e
     #  pass
     pool.terminate()
-    if isinstance(output_callback, types.ListType) and callback_status_count in output_callback:
+    if isinstance(output_callback, types.ListType) and \
+            callback_status_count in output_callback:
         status_clear()
     return results
 
