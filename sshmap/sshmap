@@ -18,7 +18,8 @@
 import sys
 from optparse import OptionParser
 import getpass
-from sshmap import *
+import sshmap
+
 
 if __name__ == "__main__":
     parser = OptionParser()
@@ -76,22 +77,22 @@ if __name__ == "__main__":
     options.username = getpass.getuser()
     options.output = True
     # Create our callback pipeline based on the options passed
-    callback = [callback_summarize_failures]
+    callback = [sshmap.callback.summarize_failures]
     if options.match:
-        callback.append(callback_filter_match)
+        callback.append(sshmap.callback.filter_match)
     if options.output_base64:
-        callback.append(callback_filter_base64)
+        callback.append(sshmap.callback.filter_base64)
     if options.output_json:
-        callback.append(callback_filter_json)
+        callback.append(sshmap.callback.filter_json)
     if options.callback_script:
-        callback.append(callback_exec_command)
+        callback.append(sshmap.callback.exec_command)
     else:
         if options.aggregate_output:
-            callback.append(callback_aggregate_output)
+            callback.append(sshmap.callback.aggregate_output)
         else:
-            callback.append(callback_output_prefix_host)
+            callback.append(sshmap.callback.output_prefix_host)
     if options.show_status:
-        callback.append(callback_status_count)
+        callback.append(sshmap.callback.status_count)
         # Get the password if the options passed indicate it might be needed
     if options.sudo:
         # Prompt for password, we really need to add a password file option
