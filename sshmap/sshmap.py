@@ -16,9 +16,6 @@
 """
 #disable deprecated warning messages
 import warnings
-import sshmap.utility.get_parm_val
-import sshmap.utility.status_info
-import sshmap.utility.status_clear
 
 warnings.filterwarnings("ignore")
 

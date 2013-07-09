@@ -19,7 +19,7 @@ from distutils.core import setup
 
 setup(
     name="sshmap",
-    version="0.5.10",
+    version="0.5.14",
     author="Dwight Hubbard",
     author_email="dhubbard@yahoo-inc.com",
     url="https://github.com/dwighthubbard/sshmap",
