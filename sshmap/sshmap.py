@@ -16,11 +16,13 @@
 """
 #disable deprecated warning messages
 import warnings
+import sshmap.utility.get_parm_val
+import sshmap.utility.status_info
+import sshmap.utility.status_clear
 
 warnings.filterwarnings("ignore")
 
 # Python Standard Library imports
-import sys
 import os
 import getpass
 import socket
@@ -35,6 +37,8 @@ import ssh
 
 # Imports from other sshmap modules
 import hostlists
+
+import sshmap.utility
 import sshmap.callback
 
 # Defaults
@@ -125,7 +129,7 @@ class ssh_result:
         """
         Get a setting from the parm dict or return None if it doesn't exist
         """
-        return get_parm_val(self.parm, key)
+        return sshmap.utility.get_parm_val(self.parm, key)
 
     def ssh_error_message(self):
         """ Return the ssh_error_message for the error code """
@@ -179,7 +183,7 @@ class ssh_results(list):
         """
         Get a setting from the parm dict or return None if it doesn't exist
         """
-        return get_parm_val(self.parm, key)
+        return sshmap.utility.get_parm_val(self.parm, key)
 
 
 def agent_auth(transport, username):
@@ -401,43 +405,6 @@ def run_command(host, command="uname -a", username=None, password=None,
     return result
 
 
-# Handy utility functions
-def get_parm_val(parm=None, key=None):
-    """
-    Return the value of a key
-
-    >>> get_parm_val(parm={'test':'val'},key='test')
-    'val'
-    >>> get_parm_val(parm={'test':'val'},key='foo')
-    >>>
-    """
-    if parm and key in parm.keys():
-        return parm[key]
-    else:
-        return None
-
-
-def status_info(callbacks, text):
-    """
-    Update the display line at the cursor
-    """
-    #print callbacks,text
-    #return
-    if isinstance(callbacks, list) and \
-            sshmap.callback.status_count in callbacks:
-        status_clear()
-        sys.stderr.write(text)
-        sys.stderr.flush()
-
-
-def status_clear():
-    """
-    Clear the status line (current line)
-    """
-    sys.stderr.write('\x1b[0G\x1b[0K')
-    #sys.stderr.flush()
-
-
 def init_worker():
     """ Set up the signal handler for new worker threads """
     signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -470,11 +437,11 @@ def run(host_range, command, username=None, password=None, sudo=False,
     localhost ok  0 0 {'failures': [], 'total_host_count': 1,
     'completed_host_count': 1}
     """
-    status_info(output_callback, 'Looking up hosts')
+    sshmap.utility.status_info(output_callback, 'Looking up hosts')
     hosts = hostlists.expand(hostlists.range_split(host_range))
     if shuffle:
         random.shuffle(hosts)
-    status_clear()
+    sshmap.utility.status_clear()
     results = ssh_results()
         
     if parms:
@@ -508,8 +475,8 @@ def run(host_range, command, username=None, password=None, sudo=False,
     results.parm['total_host_count'] = len(hosts)
     results.parm['completed_host_count'] = 0
 
-    status_clear()
-    status_info(output_callback, 'Spawning processes')
+    sshmap.utility.status_clear()
+    sshmap.utility.status_info(output_callback, 'Spawning processes')
 
     if jobs > len(hosts):
         jobs = len(hosts)
@@ -539,8 +506,8 @@ def run(host_range, command, username=None, password=None, sudo=False,
 
     # Create a process pool and pass the parameters to it
 
-    status_clear()
-    status_info(
+    sshmap.utility.status_clear()
+    sshmap.utility.status_info(
         output_callback, 'Sending %d commands to each process' % chunksize)
     if sshmap.callback.status_count in output_callback:
         sshmap.callback.status_count(ssh_result(parm=results.parm))
@@ -574,7 +541,7 @@ def run(host_range, command, username=None, password=None, sudo=False,
     pool.terminate()
     if isinstance(output_callback, types.ListType) and \
             sshmap.callback.status_count in output_callback:
-        status_clear()
+        sshmap.utility.status_clear()
     return results
 
 
