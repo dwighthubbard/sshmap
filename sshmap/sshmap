@@ -15,15 +15,15 @@
  Python based ssh multiplexer optimized for map operations
  command line utility.
 """
+import os
 import sys
-from optparse import OptionParser
+import optparse
 import getpass
 import sshmap
-import sshmap.callback
-
+import hostlists
 
 if __name__ == "__main__":
-    parser = OptionParser()
+    parser = optparse.OptionParser()
     #parser.add_option("--html", dest="html", default=False,action="store_true", help="Use HTML for formatting")
     parser.add_option("--output_json", dest = "output_json", default = False, action = "store_true",
                       help = "Output in JSON format")
@@ -110,9 +110,9 @@ if __name__ == "__main__":
 
     command = ' '.join(args[1:])
     range = args[0]
-    results = run(args[0], command, username = options.username, password = options.password, sudo = options.sudo,
-                  timeout = options.timeout, script = options.runscript, jobs = options.jobs, sort = options.sort,
-                  shuffle = options.shuffle, output_callback = callback, parms = vars(options))
+    results = sshmap.run(args[0], command, username=options.username, password=options.password, sudo=options.sudo,
+                  timeout=options.timeout, script=options.runscript, jobs=options.jobs, sort=options.sort,
+                  shuffle=options.shuffle, output_callback=callback, parms=vars(options))
     if options.aggregate_output:
         aggregate_hosts = results.setting('aggregate_hosts')
         collapsed_output = results.setting('collapsed_output')
@@ -123,7 +123,7 @@ if __name__ == "__main__":
                 print ','.join(hostlists.compress(aggregate_hosts[md5]))
                 print "-" * (int(columns)-2)
                 stdout, stderr = collapsed_output[md5]
-                if len(stdout): print '\n'.join(stdout)
+                if len(stdout): print ''.join(stdout)
                 if len(stderr): print >> sys.stderr, '\n'.join(stderr)
     if options.summarize_failed and 'failures' in results.parm.keys() and len(results.parm['failures']):
         print 'SSH Failed to: %s' % hostlists.compress(results.parm['failures'])

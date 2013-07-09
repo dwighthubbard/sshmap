@@ -13,6 +13,7 @@
 sshmap utility functions
 """
 import sys
+import callback
 
 __author__ = 'dhubbard'
 
@@ -39,7 +40,7 @@ def status_info(callbacks, text):
     #print callbacks,text
     #return
     if isinstance(callbacks, list) and \
-            sshmap.callback.status_count in callbacks:
+            callback.status_count in callbacks:
         status_clear()
         sys.stderr.write(text)
         sys.stderr.flush()

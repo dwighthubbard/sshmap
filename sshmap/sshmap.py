@@ -34,9 +34,8 @@ import ssh
 
 # Imports from other sshmap modules
 import hostlists
-
-import sshmap.utility
-import sshmap.callback
+import utility
+import callback
 
 # Defaults
 JOB_MAX = 100
@@ -86,7 +85,13 @@ from multiprocessing.pool import IMapIterator
 
 
 def wrapper(func):
+    """
+    Simple timeout wrapper for multiprocessing
+    """
     def wrap(self, timeout=None):
+        """
+        The wrapper method
+        """
         return func(self, timeout=timeout if timeout is not None else 1e100)
 
     return wrap
@@ -95,7 +100,7 @@ def wrapper(func):
 IMapIterator.next = wrapper(IMapIterator.next)
 
 
-class ssh_result:
+class ssh_result(object):
     """
     ssh_result class, that holds the output from the ssh_call.  This is passed
     to all the callback functions.
@@ -126,7 +131,7 @@ class ssh_result:
         """
         Get a setting from the parm dict or return None if it doesn't exist
         """
-        return sshmap.utility.get_parm_val(self.parm, key)
+        return utility.get_parm_val(self.parm, key)
 
     def ssh_error_message(self):
         """ Return the ssh_error_message for the error code """
@@ -180,7 +185,7 @@ class ssh_results(list):
         """
         Get a setting from the parm dict or return None if it doesn't exist
         """
-        return sshmap.utility.get_parm_val(self.parm, key)
+        return utility.get_parm_val(self.parm, key)
 
 
 def agent_auth(transport, username):
@@ -324,7 +329,7 @@ def run_command(host, command="uname -a", username=None, password=None,
         if sudo:
             stdin, stdout, stderr, chan = client.exec_command(
                 'sudo -k -S %s' % command,
-                timeout=timeout, bufsize=bufsize, pty=True
+                timeout=timeout, bufsize=bufsize, pty=False
             )
             if not chan:
                 result.ssh_retcode = RUN_FAIL_CONNECT
@@ -345,29 +350,33 @@ def run_command(host, command="uname -a", username=None, password=None,
             # Send the password
             stdin.write(password + '\r')
             stdin.flush()
-            
-            # Remove the password prompt and password from the output
-            prompt = _term_readline(stdout)
-            seen_password = False
-            seen_password_prompt = False
-            #print 'READ:',prompt
-            while 'assword:' in prompt or password in prompt or \
-                    'try again' in prompt or len(prompt.strip()) == 0:
-                if 'try again' in prompt:
-                    result.ssh_retcode = RUN_FAIL_BADPASSWORD
-                    return result
-                prompt_new = _term_readline(stdout)
-                if 'assword:' in prompt:
-                    seen_password_prompt = True
-                if password in prompt:
-                    seen_password = True
-                if seen_password_prompt and seen_password:
-                    break
-                prompt = prompt_new
+
+            if False:
+                # Remove the password prompt and password from the output
+                # should only be needed if using a pty
+                prompt = _term_readline(stdout)
+                seen_password = False
+                seen_password_prompt = False
+                #print 'READ:',prompt
+                while 'assword:' in prompt or False or password in prompt or \
+                        'try again' in prompt or len(prompt.strip()) == 0:
+                    if 'try again' in prompt:
+                        result.ssh_retcode = RUN_FAIL_BADPASSWORD
+                        return result
+                    prompt_new = _term_readline(stdout)
+                    if 'assword:' in prompt:
+                        seen_password_prompt = True
+                    if password in prompt:
+                        seen_password = True
+                    if seen_password_prompt or seen_password:
+                        break
+                    prompt = prompt_new
         except socket.timeout:
             result.err = ['Timeout during sudo connect, likely bad password']
             result.ssh_retcode = RUN_FAIL_TIMEOUT
             return result
+    result.out = []
+    result.err = []
     if script:
         # Pass the script over stdin and close the channel so the receving end
         # gets an EOF process it as a django template with the arguments passed
@@ -388,10 +397,17 @@ def run_command(host, command="uname -a", username=None, password=None,
             stdin.write(open(script, 'r').read())
         stdin.flush()
         stdin.channel.shutdown_write()
+        if sudo:
+            prompt = _term_readline(stderr)
+            if prompt and 'assword' not in prompt and password not in prompt:
+                result.err = [prompt]
+            #prompt = _term_readline(stderr)
+
     try:
         # Read the output from stdout,stderr and close the connection
-        result.out = stdout.readlines()
-        result.err = stderr.readlines()
+        result.out = result.out + stdout.readlines()
+        result.err = result.err + stderr.readlines()
+        #print result.err
         result.retcode = chan.recv_exit_status()
         if close_client:
             client.close()
@@ -409,7 +425,7 @@ def init_worker():
 
 def run(host_range, command, username=None, password=None, sudo=False,
         script=None, timeout=None, sort=False, bufsize=-1, cwd='/tmp',
-        jobs=None, output_callback=sshmap.callback.summarize_failures,
+        jobs=None, output_callback=callback.summarize_failures,
         parms=None, shuffle=False, chunksize=None):
     """
     Run a command on a hostlists host_range of hosts
@@ -434,11 +450,11 @@ def run(host_range, command, username=None, password=None, sudo=False,
     localhost ok  0 0 {'failures': [], 'total_host_count': 1,
     'completed_host_count': 1}
     """
-    sshmap.utility.status_info(output_callback, 'Looking up hosts')
+    utility.status_info(output_callback, 'Looking up hosts')
     hosts = hostlists.expand(hostlists.range_split(host_range))
     if shuffle:
         random.shuffle(hosts)
-    sshmap.utility.status_clear()
+    utility.status_clear()
     results = ssh_results()
         
     if parms:
@@ -472,8 +488,8 @@ def run(host_range, command, username=None, password=None, sudo=False,
     results.parm['total_host_count'] = len(hosts)
     results.parm['completed_host_count'] = 0
 
-    sshmap.utility.status_clear()
-    sshmap.utility.status_info(output_callback, 'Spawning processes')
+    utility.status_clear()
+    utility.status_info(output_callback, 'Spawning processes')
 
     if jobs > len(hosts):
         jobs = len(hosts)
@@ -498,16 +514,16 @@ def run(host_range, command, username=None, password=None, sudo=False,
         map_command = pool.imap_unordered
 
     if isinstance(output_callback, types.ListType) and \
-            sshmap.callback.status_count in output_callback:
-        sshmap.callback.status_count(ssh_result(parm=results.parm))
+            callback.status_count in output_callback:
+        callback.status_count(ssh_result(parm=results.parm))
 
     # Create a process pool and pass the parameters to it
 
-    sshmap.utility.status_clear()
-    sshmap.utility.status_info(
+    utility.status_clear()
+    utility.status_info(
         output_callback, 'Sending %d commands to each process' % chunksize)
-    if sshmap.callback.status_count in output_callback:
-        sshmap.callback.status_count(ssh_result(parm=results.parm))
+    if callback.status_count in output_callback:
+        callback.status_count(ssh_result(parm=results.parm))
         
     try:
         for result in map_command(
@@ -522,8 +538,8 @@ def run(host_range, command, username=None, password=None, sudo=False,
             results.parm['completed_host_count'] += 1
             result.parm = results.parm
             if isinstance(output_callback, types.ListType):
-                for callback in output_callback:
-                    result = callback(result)
+                for cb in output_callback:
+                    result = cb(result)
             else:
                 result = output_callback(result)
             results.parm = result.parm
@@ -537,8 +553,8 @@ def run(host_range, command, username=None, password=None, sudo=False,
     #  pass
     pool.terminate()
     if isinstance(output_callback, types.ListType) and \
-            sshmap.callback.status_count in output_callback:
-        sshmap.utility.status_clear()
+            callback.status_count in output_callback:
+        utility.status_clear()
     return results
 
 

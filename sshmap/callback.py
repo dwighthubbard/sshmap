@@ -9,8 +9,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License. See accompanying LICENSE file.
-from sshmap.utility import status_clear
-
 __author__ = 'dhubbard'
 """
 sshmap built in callback handlers
@@ -23,7 +21,8 @@ import stat
 import base64
 import subprocess
 
-import sshmap
+import utility
+
 
 # Filter callback handlers
 def flowthrough(result):
@@ -59,7 +58,7 @@ def exec_command(result):
     script = result.setting("callback_script")
     if not script:
         return result
-    status_clear()
+    utility.status_clear()
     result_out, result_err = subprocess.Popen(
         script + " " + result.host,
         shell=True,
@@ -169,7 +168,7 @@ def output_prefix_host(result):
     """
     output = []
     error = []
-    status_clear()
+    utility.status_clear()
     # If summarize_failures option is set don't print ssh errors inline
     if result.setting('summarize_failed') and result.ssh_retcode:
         return result

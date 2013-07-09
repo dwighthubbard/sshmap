@@ -11,4 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License. See accompanying LICENSE file.
 
-from sshmap import run, run_command, ssh_result, ssh_results, fastSSHClient
+#from sshmap import run, run_command, ssh_result, ssh_results, fastSSHClient
+import sshmap
+import callback
+import utility
+from sshmap import run, run_command
