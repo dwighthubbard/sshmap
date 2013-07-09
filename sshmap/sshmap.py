@@ -375,8 +375,6 @@ def run_command(host, command="uname -a", username=None, password=None,
             result.err = ['Timeout during sudo connect, likely bad password']
             result.ssh_retcode = RUN_FAIL_TIMEOUT
             return result
-    result.out = []
-    result.err = []
     if script:
         # Pass the script over stdin and close the channel so the receving end
         # gets an EOF process it as a django template with the arguments passed
@@ -399,8 +397,8 @@ def run_command(host, command="uname -a", username=None, password=None,
         stdin.channel.shutdown_write()
     try:
         # Read the output from stdout,stderr and close the connection
-        result.out = result.out + stdout.readlines()
-        result.err = result.err + stderr.readlines()
+        result.out = stdout.readlines()
+        result.err = stderr.readlines()
         #print result.err
         result.retcode = chan.recv_exit_status()
         if close_client:
