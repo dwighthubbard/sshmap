@@ -19,6 +19,7 @@ import sys
 from optparse import OptionParser
 import getpass
 import sshmap
+import sshmap.callback
 
 
 if __name__ == "__main__":
