@@ -40,6 +40,13 @@ class TestSSH(unittest.TestCase):
         self.assertEqual('localhost: hello', result)
         os.remove('testscript.test')
 
+    def test_shell_script_sudo(self):
+        # Run a ssh command to localhost and verify it works
+        open('testscript.test', 'w').write('#!/bin/bash\nid\n')
+        result = os.popen('sshmap/sshmap localhost --runscript testscript.test --sudo').read().strip()
+        self.assert_('localhost: uid=0(root) gid=0(root) groups=0(root)' in result)
+        os.remove('testscript.test')
+
 
 if __name__ == '__main__':
     unittest.main()
