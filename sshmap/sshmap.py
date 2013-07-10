@@ -142,7 +142,9 @@ class ssh_results(list):
         print(self.parm)
 
     def print_output(self, summarize_failures=False):
-        """ Print all the objects """
+        """ Print all the objects
+        :param summarize_failures:
+        """
         for item in self.__iter__():
             item.print_output()
         if summarize_failures:
@@ -158,7 +160,6 @@ class ssh_results(list):
         :param key:
         """
         return utility.get_parm_val(self.parm, key)
-
 
 
 def agent_auth(transport, username):
@@ -239,13 +240,12 @@ def run_command(host, command="uname -a", username=None, password=None,
     :param parms:
     :param client:
     :param bufsize:
-    :param cwd:
     :param logging:
     """
     # Guess any parameters not passed that can be
     if isinstance(host, types.TupleType):
         host, command, username, password, sudo, script, timeout, parms, \
-        client = host
+            client = host
     if timeout == 0:
         timeout = None
     if not username:
@@ -253,13 +253,12 @@ def run_command(host, command="uname -a", username=None, password=None,
     if bufsize == -1 and script:
         bufsize = os.path.getsize(script) + 1024
 
+    script_parameters = None
     if script:
         temp = command.split()
         if len(temp) > 1:
             command = temp[0]
             script_parameters = temp
-        else:
-            script_parameters = None
 
     # Get a result object to put our output in
     result = ssh_result(host=host, parm=parms)
@@ -297,6 +296,7 @@ def run_command(host, command="uname -a", username=None, password=None,
         result.ssh_retcode = defaults.RUN_FAIL_CONNECT
         return result
     except Exception as message:
+        logging.debug('Got unknown exception %s', message)
         result.ssh_retcode = defaults.RUN_FAIL_UNKNOWN
         return result
     try:
@@ -448,6 +448,7 @@ def run(host_range, command, username=None, password=None, sudo=False,
     if sudo and not password:
         for host in hosts:
             result = ssh_result()
+            result.host = host
             result.err = 'Sudo password required'
             result.retcode = defaults.RUN_FAIL_NOPASSWORD
             results.append(result)
