@@ -28,14 +28,9 @@ class TestSSH(unittest.TestCase):
         result = os.popen('sshmap/sshmap localhost echo hello').read().strip()
         self.assertEqual('localhost: hello', result)
 
-    #def test_shell_command_with_sudo(self):
-        # Run a ssh command to localhost and verify it works
-        #result = os.popen('sshmap/sshmap --sudo localhost echo hello').read().strip()
-        #self.assertEqual('localhost: hello', result)
-
     def test_shell_script_as_user(self):
         # Run a ssh command to localhost and verify it works
-        open('testscript.test').write('#!/bin/bash\necho hello\n')
+        open('testscript.test', 'w').write('#!/bin/bash\necho hello\n')
         result = os.popen('sshmap/sshmap localhost --runscript testscript.test').read().strip()
         self.assertEqual('localhost: hello', result)
         os.remove('testscript.test')
