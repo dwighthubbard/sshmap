@@ -17,7 +17,9 @@ import os
 import unittest
 
 class TestSSH(unittest.TestCase):
-
+    """
+    sshmap unit tests
+    """
     def set_up(self):
         pass
 
@@ -38,7 +40,6 @@ class TestSSH(unittest.TestCase):
         self.assertEqual('localhost: hello', result)
         os.remove('testscript.test')
 
-    def test_shell_script_as_root(self):
 
 if __name__ == '__main__':
     unittest.main()
