@@ -31,7 +31,6 @@ class TestSSH(unittest.TestCase):
     def test_shell_command_sudo(self):
         # Run a ssh command to localhost and verify it works
         result = os.popen('sshmap/sshmap localhost --sudo id').read().split('\n')[-1].strip()
-        self.assertEqual('localhost: hello', result)
         self.assertIn(result, 'localhost: uid=0(root) gid=0(root) groups=0(root)')
 
     def test_shell_script_as_user(self):
