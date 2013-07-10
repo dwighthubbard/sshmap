@@ -21,6 +21,7 @@ warnings.filterwarnings("ignore")
 
 # Python Standard Library imports
 import os
+import sys
 import getpass
 import socket
 import types
@@ -87,6 +88,7 @@ from multiprocessing.pool import IMapIterator
 def wrapper(func):
     """
     Simple timeout wrapper for multiprocessing
+    :param func:
     """
     def wrap(self, timeout=None):
         """
@@ -130,6 +132,7 @@ class ssh_result(object):
     def setting(self, key):
         """
         Get a setting from the parm dict or return None if it doesn't exist
+        :param key:
         """
         return utility.get_parm_val(self.parm, key)
 
@@ -138,14 +141,19 @@ class ssh_result(object):
         return RUN_CODES[self.ssh_retcode]
 
     def dump(self, return_parm=True, return_retcode=True):
-        """ Print all our public values """
-        print self.host, self.out_string().replace('\n', ''), self.err_string().replace('\n', ''),
+        """ Print all our public values
+        :param return_parm:
+        :param return_retcode:
+        """
+        sys.stdout.write(self.host+' ')
+        sys.stdout.write(self.out_string().replace('\n', '')+' ')
+        sys.stderr.write(self.err_string().replace('\n', '')+' ')
         if return_retcode:
-            print self.retcode,
+            sys.stdout.write(self.retcode+' ')
         if return_parm:
-            print self.ssh_retcode, self.parm
+            sys.stdout.write(self.ssh_retcode+' '+self.parm)
         else:
-            print
+            sys.stdout.write('\n')
 
     def print_output(self):
         """ Print output from the commands """
