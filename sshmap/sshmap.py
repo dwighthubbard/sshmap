@@ -14,9 +14,11 @@
 """
  Python based ssh multiplexer optimized for map operations
 """
-#disable deprecated warning messages
-import warnings
+# Pull in the python3 print function for python3 compatibility
+from __future__ import print_function
 
+#disable deprecated warning messages that occur during some of the imports
+import warnings
 warnings.filterwarnings("ignore")
 
 # Python Standard Library imports
@@ -37,48 +39,8 @@ import ssh
 import hostlists
 import utility
 import callback
+import defaults
 
-# Defaults
-JOB_MAX = 100
-# noinspection PyBroadException
-try:
-    for line in open('/proc/%d/limits' % os.getpid(), 'r').readlines():
-        if line.startswith('Max processes'):
-            JOB_MAX = int(line.strip().split()[2]) / 4
-except:
-    pass
-
-# Return code values
-RUN_OK = 0
-RUN_FAIL_AUTH = 1
-RUN_FAIL_TIMEOUT = 2
-RUN_FAIL_CONNECT = 3
-RUN_FAIL_SSH = 4
-RUN_SUDO_PROMPT = 5
-RUN_FAIL_UNKNOWN = 6
-RUN_FAIL_NOPASSWORD = 7
-RUN_FAIL_BADPASSWORD = 8
-
-# Text return codes
-RUN_CODES = ['Ok', 'Authentication Error', 'Timeout', 'SSH Connection Failed',
-             'SSH Failure',
-             'Sudo did not send a password prompt', 'Connection refused',
-             'Sudo password required',
-             'Invalid sudo password']
-
-# Configuration file field descriptions
-conf_desc = {
-    "username": "IRC Server username",
-    "password": "IRC Server password",
-    "channel": "sshmap",
-}
-
-# Configuration file defaults 
-conf_defaults = {
-    "address": "chat.freenode.net",
-    "port": "6667",
-    "use_ssl": False,
-}
 
 # Fix to make ctrl-c correctly terminate child processes
 # spawned by the multiprocessing module
@@ -93,6 +55,7 @@ def wrapper(func):
     def wrap(self, timeout=None):
         """
         The wrapper method
+        :param timeout:
         """
         return func(self, timeout=timeout if timeout is not None else 1e100)
 
@@ -138,7 +101,7 @@ class ssh_result(object):
 
     def ssh_error_message(self):
         """ Return the ssh_error_message for the error code """
-        return RUN_CODES[self.ssh_retcode]
+        return defaults.RUN_CODES[self.ssh_retcode]
 
     def dump(self, return_parm=True, return_retcode=True):
         """ Print all our public values
@@ -176,7 +139,7 @@ class ssh_results(list):
         """ Dump all the result objects """
         for item in self.__iter__():
             item.dump(return_parm=False, return_retcode=False)
-        print self.parm
+        print(self.parm)
 
     def print_output(self, summarize_failures=False):
         """ Print all the objects """
@@ -192,8 +155,10 @@ class ssh_results(list):
     def setting(self, key):
         """
         Get a setting from the parm dict or return None if it doesn't exist
+        :param key:
         """
         return utility.get_parm_val(self.parm, key)
+
 
 
 def agent_auth(transport, username):
@@ -201,6 +166,8 @@ def agent_auth(transport, username):
     Attempt to authenticate to the given transport using any of the private
     keys available from an SSH agent or from a local private RSA key file
     (assumes no pass phrase).
+    :param transport:
+    :param username:
     """
 
     agent = ssh.Agent()
@@ -252,14 +219,14 @@ def _term_readline(handle):
             if char in ['\r', '\n']:
                 return buf
             char = handle.read(1)
-    except Exception, message:
-        print Exception, message
+    except Exception as message:
+        print('%s %s' % (Exception, message))
     return buf
 
 
 def run_command(host, command="uname -a", username=None, password=None,
                 sudo=False, script=None, timeout=None, parms=None, client=None,
-                bufsize=-1, cwd='/tmp', logging=False):
+                bufsize=-1, logging=False):
     """
     Run a command or script on a remote node via ssh
     :param host:
@@ -277,7 +244,8 @@ def run_command(host, command="uname -a", username=None, password=None,
     """
     # Guess any parameters not passed that can be
     if isinstance(host, types.TupleType):
-        host, command, username, password, sudo, script, timeout, parms, client = host
+        host, command, username, password, sudo, script, timeout, parms, \
+        client = host
     if timeout == 0:
         timeout = None
     if not username:
@@ -306,7 +274,7 @@ def run_command(host, command="uname -a", username=None, password=None,
             client = fastSSHClient()
         except:
             result.err = ['Error creating client']
-            result.ssh_retcode = RUN_FAIL_UNKNOWN
+            result.ssh_retcode = defaults.RUN_FAIL_UNKNOWN
             return result
         client.set_missing_host_key_policy(ssh.AutoAddPolicy())
         # load_system_host_keys slows things way down
@@ -317,19 +285,19 @@ def run_command(host, command="uname -a", username=None, password=None,
         client.connect(host, username=username, password=password,
                        timeout=timeout)
     except ssh.AuthenticationException:
-        result.ssh_retcode = RUN_FAIL_AUTH
+        result.ssh_retcode = defaults.RUN_FAIL_AUTH
         return result
     except ssh.SSHException:
-        result.ssh_retcode = RUN_FAIL_CONNECT
+        result.ssh_retcode = defaults.RUN_FAIL_CONNECT
         return result
     except AttributeError:
-        result.ssh_retcode = RUN_FAIL_SSH
+        result.ssh_retcode = defaults.RUN_FAIL_SSH
         return result
     except socket.error:
-        result.ssh_retcode = RUN_FAIL_CONNECT
+        result.ssh_retcode = defaults.RUN_FAIL_CONNECT
         return result
-    except Exception, message:
-        result.ssh_retcode = RUN_FAIL_UNKNOWN
+    except Exception as message:
+        result.ssh_retcode = defaults.RUN_FAIL_UNKNOWN
         return result
     try:
     # We have to force a sudo -k first or we can't reliably know we'll be
@@ -340,18 +308,18 @@ def run_command(host, command="uname -a", username=None, password=None,
                 timeout=timeout, bufsize=bufsize, pty=False
             )
             if not chan:
-                result.ssh_retcode = RUN_FAIL_CONNECT
+                result.ssh_retcode = defaults.RUN_FAIL_CONNECT
                 return result
         else:
             stdin, stdout, stderr, chan = client.exec_command(
                 command, timeout=timeout, bufsize=bufsize)
             if not chan:
-                result.ssh_retcode = RUN_FAIL_CONNECT
+                result.ssh_retcode = defaults.RUN_FAIL_CONNECT
                 result.err = ["WTF, this shouldn't happen\n"]
                 return result
 
-    except ssh.SSHException, ssh.transport.SSHException:
-        result.ssh_retcode = RUN_FAIL_SSH
+    except (ssh.SSHException, ssh.transport.SSHException):
+        result.ssh_retcode = defaults.RUN_FAIL_SSH
         return result
     if sudo:
         try:
@@ -369,7 +337,7 @@ def run_command(host, command="uname -a", username=None, password=None,
                 while 'assword:' in prompt or False or password in prompt or \
                         'try again' in prompt or len(prompt.strip()) == 0:
                     if 'try again' in prompt:
-                        result.ssh_retcode = RUN_FAIL_BADPASSWORD
+                        result.ssh_retcode = defaults.RUN_FAIL_BADPASSWORD
                         return result
                     prompt_new = _term_readline(stdout)
                     if 'assword:' in prompt:
@@ -381,7 +349,7 @@ def run_command(host, command="uname -a", username=None, password=None,
                     prompt = prompt_new
         except socket.timeout:
             result.err = ['Timeout during sudo connect, likely bad password']
-            result.ssh_retcode = RUN_FAIL_TIMEOUT
+            result.ssh_retcode = defaults.RUN_FAIL_TIMEOUT
             return result
     if script:
         # Pass the script over stdin and close the channel so the receving end
@@ -395,9 +363,9 @@ def run_command(host, command="uname -a", username=None, password=None,
             django.conf.settings.configure()
             template = open(script, 'r').read()
             if script_parameters:
-                c = django.template.Context({ 'argv': script_parameters })
+                c = django.template.Context({'argv': script_parameters})
             else:
-                c = django.template.Context({ })
+                c = django.template.Context({})
             stdin.write(django.template.Template(template).render(c))
         except Exception as e:
             stdin.write(open(script, 'r').read())
@@ -429,9 +397,9 @@ def run_command(host, command="uname -a", username=None, password=None,
         if close_client:
             client.close()
     except socket.timeout:
-        result.ssh_retcode = RUN_FAIL_TIMEOUT
+        result.ssh_retcode = defaults.RUN_FAIL_TIMEOUT
         return result
-    result.ssh_retcode = RUN_OK
+    result.ssh_retcode = defaults.RUN_OK
     return result
 
 
@@ -441,7 +409,7 @@ def init_worker():
 
 
 def run(host_range, command, username=None, password=None, sudo=False,
-        script=None, timeout=None, sort=False, bufsize=-1, cwd='/tmp',
+        script=None, timeout=None, sort=False,
         jobs=None, output_callback=callback.summarize_failures,
         parms=None, shuffle=False, chunksize=None):
     """
@@ -454,8 +422,6 @@ def run(host_range, command, username=None, password=None, sudo=False,
     :param script:
     :param timeout:
     :param sort:
-    :param bufsize:
-    :param cwd:
     :param jobs:
     :param output_callback:
     :param parms:
@@ -477,13 +443,13 @@ def run(host_range, command, username=None, password=None, sudo=False,
     if parms:
         results.parm = parms
     else:
-        results.parm = { }
+        results.parm = {}
 
     if sudo and not password:
         for host in hosts:
-            result=ssh_result()
-            result.err='Sudo password required'
-            result.retcode = RUN_FAIL_NOPASSWORD
+            result = ssh_result()
+            result.err = 'Sudo password required'
+            result.retcode = defaults.RUN_FAIL_NOPASSWORD
             results.append(result)
         results.parm['total_host_count'] = len(hosts)
         results.parm['completed_host_count'] = 0
@@ -492,8 +458,8 @@ def run(host_range, command, username=None, password=None, sudo=False,
 
     if jobs < 1:
         jobs = 1
-    if jobs > JOB_MAX:
-        jobs = JOB_MAX
+    if jobs > defaults.JOB_MAX:
+        jobs = defaults.JOB_MAX
 
     # Set up our ssh client
     #status_info(output_callback,'Setting up the SSH client')
@@ -513,7 +479,6 @@ def run(host_range, command, username=None, password=None, sudo=False,
 
     pool = multiprocessing.Pool(processes=jobs, initializer=init_worker)
     if not chunksize:
-        chunksize = 1
         if jobs >= len(hosts):
             chunksize = 1
         else:
@@ -551,7 +516,8 @@ def run(host_range, command, username=None, password=None, sudo=False,
                     results.parm, client
                 ) for host in hosts
             ],
-            chunksize):
+            chunksize
+        ):
             results.parm['completed_host_count'] += 1
             result.parm = results.parm
             if isinstance(output_callback, types.ListType):
