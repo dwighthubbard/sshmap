@@ -29,6 +29,7 @@ import socket
 import types
 import random
 import signal
+import inspect
 import multiprocessing
 import logging
 
@@ -406,6 +407,25 @@ def run_command(host, command="uname -a", username=None, password=None,
 def init_worker():
     """ Set up the signal handler for new worker threads """
     signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+
+def rpc(method, host_range, *args, **kwargs):
+    """
+    Perform a remote procedure call on a range of hosts via ssh.
+
+    This requires the python function/method be in an actual source file.  It
+    will not work from the python shell.
+    :param method: Python function to execute
+    :param host_range: List of hosts to execute on
+    :param args: Arguments
+    :param kwargs: Keyword arguments
+    """
+    print('Required Arguments:')
+    print(method)
+    print(host_range)
+    print('Method Arguments')
+    print(*args)
+    print(**kwargs)
 
 
 def run(host_range, command, username=None, password=None, sudo=False,

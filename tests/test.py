@@ -20,6 +20,11 @@ import os
 import unittest
 
 
+def test_rpc_method():
+    import os
+    return os.popen('uname -n')
+
+
 class TestSSH(unittest.TestCase):
     """
     sshmap unit tests
@@ -48,7 +53,7 @@ class TestSSH(unittest.TestCase):
         os.remove('testscript.test')
 
     def test_shell_script_sudo(self):
-        # Run a ssh command to localhost and verify it works
+        """Run a ssh command to localhost and verify it works """
         open('testscript.test', 'w').write('#!/bin/bash\nid\n')
         result = os.popen(
             'sshmap/sshmap localhost --runscript testscript.test --sudo'
@@ -56,6 +61,13 @@ class TestSSH(unittest.TestCase):
         self.assert_(
             'localhost: uid=0(root) gid=0(root) groups=0(root)' in result)
         os.remove('testscript.test')
+
+    def test_rpc_call(self):
+        """
+        Execute an rpc call without arguments via ssh
+        """
+        result = sshmap.rpc(test_rpc_method,['localhost'])
+        self.assertEqual(result, os.popen('uname -n').read())
 
 
 if __name__ == '__main__':
