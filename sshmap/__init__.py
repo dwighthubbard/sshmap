@@ -15,4 +15,4 @@
 import sshmap
 import callback
 import utility
-from sshmap import run, run_command
+from sshmap import run, run_command, rpc
