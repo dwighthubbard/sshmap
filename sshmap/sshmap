@@ -25,7 +25,8 @@ import hostlists
 if __name__ == "__main__":
     parser = optparse.OptionParser()
     #parser.add_option("--html", dest="html", default=False,action="store_true", help="Use HTML for formatting")
-    parser.add_option("--output_json", dest = "output_json", default = False, action = "store_true",
+    parser.add_option("--output_json", dest="output_json",
+                      default=False, action="store_true",
                       help = "Output in JSON format")
     parser.add_option("--output_base64", dest = "output_base64", default = False, action = "store_true",
                       help = "Output in base64 format")
