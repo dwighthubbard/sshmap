@@ -41,7 +41,7 @@ import hostlists
 import utility
 import callback
 import defaults
-
+import runner
 
 # Fix to make ctrl-c correctly terminate child processes
 # spawned by the multiprocessing module
@@ -362,14 +362,20 @@ def run_command(host, command="uname -a", username=None, password=None,
             import django.conf
 
             django.conf.settings.configure()
-            template = open(script, 'r').read()
+            if os.path.exists(script):
+                template = open(script, 'r').read()
+            else:
+                template = script
             if script_parameters:
                 c = django.template.Context({'argv': script_parameters})
             else:
                 c = django.template.Context({})
             stdin.write(django.template.Template(template).render(c))
         except Exception as e:
-            stdin.write(open(script, 'r').read())
+            if os.path.exists(script):
+                stdin.write(open(script, 'r').read())
+            else:
+                stdin.write(script)
         stdin.flush()
         stdin.channel.shutdown_write()
     try:
@@ -384,7 +390,7 @@ def run_command(host, command="uname -a", username=None, password=None,
             skip = False
             for el in result.err:
                 if check_prompt:
-                    if password in el or 'assword:' in el:
+                    if password in el or 'assword:' in el or '[sudo] password' in el:
                         skip = True
                     else:
                         check_prompt = False
@@ -424,13 +430,18 @@ def rpc(method, host_range, *args, **kwargs):
     print(method)
     print(host_range)
     print('Method Arguments')
-    print(*args)
-    print(**kwargs)
+    print(args)
+    print(kwargs)
+    run_script = runner.get_runner(command='/usr/bin/python', input=inspect.getsource(method))
+    print('Remote run script')
+    print(run_script)
+    os.popen('/usr/bin/python', 'w').write(run_script)
+    run(host_range=host_range, command='/usr/bin/python', script=run_script)
 
 
 def run(host_range, command, username=None, password=None, sudo=False,
         script=None, timeout=None, sort=False,
-        jobs=None, output_callback=callback.summarize_failures,
+        jobs=None, output_callback=[callback.summarize_failures],
         parms=None, shuffle=False, chunksize=None):
     """
     Run a command on a hostlists host_range of hosts
