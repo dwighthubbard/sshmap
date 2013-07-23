@@ -18,11 +18,7 @@ __author__ = 'dhubbard'
 import sshmap
 import os
 import unittest
-
-
-def test_rpc_method():
-    import os
-    return os.popen('uname -n')
+import runner
 
 
 class TestSSH(unittest.TestCase):
@@ -56,17 +52,22 @@ class TestSSH(unittest.TestCase):
         """Run a ssh command to localhost and verify it works """
         open('testscript.test', 'w').write('#!/bin/bash\nid\n')
         result = os.popen(
-            'sshmap/sshmap localhost --runscript testscript.test --sudo --timeout 15'
+            'sshmap/sshmap localhost --runscript testscript.test --sudo '
+            '--timeout 15'
         ).read().strip()
         self.assert_(
             'localhost: uid=0(root) gid=0(root) groups=0(root)' in result)
         os.remove('testscript.test')
 
-    def test_rpc_call(self):
+    def run_with_runner(self):
         """
         Execute an rpc call without arguments via ssh
         """
-        result = sshmap.rpc(test_rpc_method, ['localhost'])
+        result = sshmap.run_with_runner(
+            'localhost',
+            'uname -n',
+            runner=runner.script_stdin
+        )
         self.assertEqual(result, os.popen('uname -n').read())
 
 

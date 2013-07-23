@@ -390,7 +390,8 @@ def run_command(host, command="uname -a", username=None, password=None,
             skip = False
             for el in result.err:
                 if check_prompt:
-                    if password in el or 'assword:' in el or '[sudo] password' in el:
+                    if password in el or 'assword:' in el or \
+                            '[sudo] password' in el:
                         skip = True
                     else:
                         check_prompt = False
@@ -415,28 +416,21 @@ def init_worker():
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
-def rpc(method, host_range, *args, **kwargs):
+def run_with_runner(*args, **kwargs):
     """
-    Perform a remote procedure call on a range of hosts via ssh.
-
-    This requires the python function/method be in an actual source file.  It
-    will not work from the python shell.
-    :param method: Python function to execute
-    :param host_range: List of hosts to execute on
-    :param args: Arguments
-    :param kwargs: Keyword arguments
+    Run a command with a python runner script
     """
-    print('Required Arguments:')
-    print(method)
-    print(host_range)
-    print('Method Arguments')
-    print(args)
-    print(kwargs)
-    run_script = runner.get_runner(command='/usr/bin/python', input=inspect.getsource(method))
-    print('Remote run script')
-    print(run_script)
-    os.popen('/usr/bin/python', 'w').write(run_script)
-    run(host_range=host_range, command='/usr/bin/python', script=run_script)
+    if 'runner' in kwargs.keys() and isinstance(
+        kwargs['runner'], type.FunctionType):
+        kwargs['script'] = runner.get_runner(
+            command=args[1],
+            input="",
+            password=kwargs['password'],
+            runner_script=kwargs['runner'],
+            compressor='bz2'
+        )
+        del kwargs['runner']
+    return run(*args, **kwargs)
 
 
 def run(host_range, command, username=None, password=None, sudo=False,

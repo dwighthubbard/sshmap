@@ -16,4 +16,4 @@ import sshmap
 import callback
 import utility
 import runner
-from sshmap import run, run_command, rpc
+from sshmap import run, run_command

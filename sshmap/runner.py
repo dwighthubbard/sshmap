@@ -29,11 +29,10 @@ fh.write(\"{password}\\n\")
 fh.write(\"\"\"{input}\"\"\".decode('base64').decode('{compressor}'))
 """
 
-def get_runner(command, input, password='', sudo=False, compressor='bz2'):
-    if sudo:
-        script = script_sudo
-    else:
-        script = script_stdin
+def get_runner(command, input, password='', runner_script=None,
+               compressor='bz2'):
+    if not runner_script:
+        runner_script = script_stdin
 
     if compressor not in ['bz2', 'zlilb']:
         compressor = 'bz2'
@@ -41,7 +40,7 @@ def get_runner(command, input, password='', sudo=False, compressor='bz2'):
     base64_command = base64.b64encode(command.encode('bz2'))
     base64_input = base64.b64encode(input.encode('bz2'))
 
-    return script.format(
+    return runner_script.format(
         command=base64_command,
         input=base64_input,
         compressor=compressor,
