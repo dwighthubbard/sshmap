@@ -66,7 +66,7 @@ class TestSSH(unittest.TestCase):
         result = sshmap.run_with_runner(
             'localhost',
             'uname -n',
-            runner=runner.script_stdin
+            runner=sshmap.runner.script_stdin
         )
         self.assertEqual(result, os.popen('uname -n').read())
 
