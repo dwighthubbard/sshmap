@@ -56,7 +56,7 @@ class TestSSH(unittest.TestCase):
         """Run a ssh command to localhost and verify it works """
         open('testscript.test', 'w').write('#!/bin/bash\nid\n')
         result = os.popen(
-            'sshmap/sshmap localhost --runscript testscript.test --sudo'
+            'sshmap/sshmap localhost --runscript testscript.test --sudo --timeout 15'
         ).read().strip()
         self.assert_(
             'localhost: uid=0(root) gid=0(root) groups=0(root)' in result)
