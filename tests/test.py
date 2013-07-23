@@ -66,7 +66,7 @@ class TestSSH(unittest.TestCase):
         """
         Execute an rpc call without arguments via ssh
         """
-        result = sshmap.rpc(test_rpc_method,['localhost'])
+        result = sshmap.rpc(test_rpc_method, ['localhost'])
         self.assertEqual(result, os.popen('uname -n').read())
 
 
