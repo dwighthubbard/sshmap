@@ -18,7 +18,6 @@ __author__ = 'dhubbard'
 import sshmap
 import os
 import unittest
-import runner
 
 
 class TestSSH(unittest.TestCase):
