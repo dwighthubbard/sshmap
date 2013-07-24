@@ -91,14 +91,14 @@ if __name__ == "__main__":
     if options.sudo:
         # Prompt for password, we really need to add a password file option
         try:
-            options.password = os.environ['SUDO_PASSWORD']
+            options.password = os.environ['SSHMAP_SUDO_PASSWORD']
         except KeyError:
             options.password = getpass.getpass(
                 'Enter sudo password for user ' + getpass.getuser() + ': ')
     elif options.password:
         # Prompt for password, we really need to add a password file option
         try:
-            options.password = os.environ['SUDO_PASSWORD']
+            options.password = os.environ['SSHMAP_SUDO_PASSWORD']
         except KeyError:
             options.password = getpass.getpass(
                 'Enter password for user ' + getpass.getuser() + ': ')
