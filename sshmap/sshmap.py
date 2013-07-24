@@ -327,33 +327,12 @@ def run_command(host, command="uname -a", username=None, password=None,
             # Send the password
             stdin.write(password + '\r')
             stdin.flush()
-
-            if False:
-                # Remove the password prompt and password from the output
-                # should only be needed if using a pty
-                prompt = _term_readline(stdout)
-                seen_password = False
-                seen_password_prompt = False
-                #print 'READ:',prompt
-                while 'assword:' in prompt or False or password in prompt or \
-                        'try again' in prompt or len(prompt.strip()) == 0:
-                    if 'try again' in prompt:
-                        result.ssh_retcode = defaults.RUN_FAIL_BADPASSWORD
-                        return result
-                    prompt_new = _term_readline(stdout)
-                    if 'assword:' in prompt:
-                        seen_password_prompt = True
-                    if password in prompt:
-                        seen_password = True
-                    if seen_password_prompt or seen_password:
-                        break
-                    prompt = prompt_new
         except socket.timeout:
             result.err = ['Timeout during sudo connect, likely bad password']
             result.ssh_retcode = defaults.RUN_FAIL_TIMEOUT
             return result
     if script:
-        # Pass the script over stdin and close the channel so the receving end
+        # Pass the script over stdin and close the channel so the receiving end
         # gets an EOF process it as a django template with the arguments passed
         # noinspection PyBroadException
         try:
@@ -371,7 +350,7 @@ def run_command(host, command="uname -a", username=None, password=None,
             else:
                 c = django.template.Context({})
             stdin.write(django.template.Template(template).render(c))
-        except Exception as e:
+        except:
             if os.path.exists(script):
                 stdin.write(open(script, 'r').read())
             else:
@@ -401,7 +380,6 @@ def run_command(host, command="uname -a", username=None, password=None,
                 skip = False
             result.err = err
 
-        #print result.err
         result.retcode = chan.recv_exit_status()
         if close_client:
             client.close()
@@ -420,6 +398,8 @@ def init_worker():
 def run_with_runner(*args, **kwargs):
     """
     Run a command with a python runner script
+    :param args:
+    :param kwargs:
     """
     if 'runner' in kwargs.keys() and isinstance(
         kwargs['runner'], type.FunctionType):

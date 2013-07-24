@@ -3,7 +3,7 @@
 #Licensed under the Apache License, Version 2.0 (the "License");
 #you may not use this file except in compliance with the License.
 #You may obtain a copy of the License at
-
+#
 # http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
@@ -24,12 +24,11 @@ import hostlists
 
 if __name__ == "__main__":
     parser = optparse.OptionParser()
-    #parser.add_option("--html", dest="html", default=False,action="store_true", help="Use HTML for formatting")
     parser.add_option("--output_json", dest="output_json",
                       default=False, action="store_true",
                       help = "Output in JSON format")
-    parser.add_option("--output_base64", dest = "output_base64", default = False, action = "store_true",
-                      help = "Output in base64 format")
+    parser.add_option("--output_base64", dest="output_base64", default=False,
+                      action="store_true", help="Output in base64 format")
     parser.add_option("--summarize_failed", dest = "summarize_failed", default = False, action = "store_true",
                       help = "Print a list of hosts that failed at the end")
     parser.add_option("--aggregate_output", "--collapse", dest = "aggregate_output", default = False,
@@ -55,8 +54,8 @@ if __name__ == "__main__":
                       help = "Don't show a status count as the command progresses")
     parser.add_option("--sudo", dest = "sudo", default = False, action = "store_true",
                       help = "Use sudo to run the command as root")
-    parser.add_option("--password", dest = "password", default = None, action = "store_true",
-                      help = "Prompt for a password")
+    parser.add_option("--password", dest="password", default=None,
+                      action="store_true", help="Prompt for a password")
 
     (options, args) = parser.parse_args()
 
@@ -65,14 +64,6 @@ if __name__ == "__main__":
         if firstline.startswith('#!'):
             command = firstline[2:]
             args.append(command)
-
-    #if len(args) != 2:
-    #    if len(args) and args[0] in ['test']:
-            # Unit testing
-    #        import doctest
-
-    #        doctest.testmod()
-            #sys.exit(0)
 
     # Default option values
     options.password = None
@@ -99,21 +90,27 @@ if __name__ == "__main__":
     if options.sudo:
         # Prompt for password, we really need to add a password file option
         try:
-            options.password = os.environ['OS_PASSWORD']
+            options.password = os.environ['SUDO_PASSWORD']
         except KeyError:
-            options.password = getpass.getpass('Enter sudo password for user ' + getpass.getuser() + ': ')
+            options.password = getpass.getpass(
+                'Enter sudo password for user ' + getpass.getuser() + ': ')
     elif options.password:
         # Prompt for password, we really need to add a password file option
         try:
-            options.password = os.environ['OS_PASSWORD']
+            options.password = os.environ['SUDO_PASSWORD']
         except KeyError:
-            options.password = getpass.getpass('Enter password for user ' + getpass.getuser() + ': ')
+            options.password = getpass.getpass(
+                'Enter password for user ' + getpass.getuser() + ': ')
 
     command = ' '.join(args[1:])
     range = args[0]
-    results = sshmap.run(args[0], command, username=options.username, password=options.password, sudo=options.sudo,
-                  timeout=options.timeout, script=options.runscript, jobs=options.jobs, sort=options.sort,
-                  shuffle=options.shuffle, output_callback=callback, parms=vars(options))
+    results = sshmap.run(
+        args[0], command, username=options.username,
+        password=options.password, sudo=options.sudo,
+        timeout=options.timeout, script=options.runscript, jobs=options.jobs,
+        sort=options.sort,
+        shuffle=options.shuffle, output_callback=callback, parms=vars(options)
+    )
     if options.aggregate_output:
         aggregate_hosts = results.setting('aggregate_hosts')
         collapsed_output = results.setting('collapsed_output')
@@ -126,5 +123,8 @@ if __name__ == "__main__":
                 stdout, stderr = collapsed_output[md5]
                 if len(stdout): print ''.join(stdout)
                 if len(stderr): print >> sys.stderr, '\n'.join(stderr)
-    if options.summarize_failed and 'failures' in results.parm.keys() and len(results.parm['failures']):
-        print 'SSH Failed to: %s' % hostlists.compress(results.parm['failures'])
+    if options.summarize_failed and 'failures' in results.parm.keys() and \
+            len(results.parm['failures']):
+        print(
+            'SSH Failed to: %s' % hostlists.compress(results.parm['failures'])
+        )
