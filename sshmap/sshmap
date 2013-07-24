@@ -52,9 +52,10 @@ if __name__ == "__main__":
                       help = "Script to process the output of each host.  The hostname will be passed as the first argument and the stdin/stderr from the host will be passed as stdin/stderr of the script")
     parser.add_option("--no_status", dest = "show_status", default = True, action = "store_false",
                       help = "Don't show a status count as the command progresses")
-    parser.add_option("--sudo", dest = "sudo", default = False, action = "store_true",
+    parser.add_option("--sudo", dest="sudo", default=False,
+                      action="store_true",
                       help = "Use sudo to run the command as root")
-    parser.add_option("--password", dest="password", default=None,
+    parser.add_option("--password", dest="password", default=False,
                       action="store_true", help="Prompt for a password")
 
     (options, args) = parser.parse_args()
@@ -121,8 +122,10 @@ if __name__ == "__main__":
                 print ','.join(hostlists.compress(aggregate_hosts[md5]))
                 print "-" * (int(columns)-2)
                 stdout, stderr = collapsed_output[md5]
-                if len(stdout): print ''.join(stdout)
-                if len(stderr): print >> sys.stderr, '\n'.join(stderr)
+                if len(stdout):
+                    print ''.join(stdout)
+                if len(stderr):
+                    print >> sys.stderr, '\n'.join(stderr)
     if options.summarize_failed and 'failures' in results.parm.keys() and \
             len(results.parm['failures']):
         print(
