@@ -43,6 +43,13 @@ import callback
 import defaults
 import runner
 
+# For backwards compatibility
+from callback import summarize_failures as callback_summarize_failures
+from callback import aggregate_output as callback_aggregate_output
+from callback import exec_command as callback_exec_command
+from callback import filter_match as callback_filter_match
+from callback import status_count as callback_status_count
+
 # Fix to make ctrl-c correctly terminate child processes
 # spawned by the multiprocessing module
 from multiprocessing.pool import IMapIterator
