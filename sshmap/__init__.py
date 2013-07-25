@@ -16,4 +16,13 @@ import sshmap
 import callback
 import utility
 import runner
+
+# For backwards compatibility
+from callback import summarize_failures as callback_summarize_failures
+from callback import aggregate_output as callback_aggregate_output
+from callback import exec_command as callback_exec_command
+from callback import filter_match as callback_filter_match
+from callback import status_count as callback_status_count
+
+# The actual used sshmap functions
 from sshmap import run, run_command
