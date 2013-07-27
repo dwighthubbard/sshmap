@@ -19,15 +19,15 @@ from distutils.core import setup
 
 setup(
     name="sshmap",
-    version="0.5.50",
+    version="0.5.57",
     author="Dwight Hubbard",
     author_email="dhubbard@yahoo-inc.com",
-    url="https://github.com/dwighthubbard/sshmap",
+    url="https://github.com/yahoo/sshmap",
     license="LICENSE.txt",
     packages=["sshmap"],
     scripts=["sshmap/sshmap"],
     long_description=open('README.txt').read(),
     description="A SSH Multiplexer designed to use ssh to perform map/reduce"
                 " operations",
-    requires=['ssh', 'hostlists', 'django'],
+    install_requires=['ssh', 'hostlists', 'django'],
 )
