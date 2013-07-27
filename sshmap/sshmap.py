@@ -371,7 +371,8 @@ def run_command(host, command="uname -a", username=None, password=None,
                 if check_prompt:
                     if password in el or 'assword:' in el or \
                             '[sudo] password' in el or el.strip() == '' or \
-                            el.strip() in defaults.sudo_message:
+                            el.strip() in defaults.sudo_message or \
+                            el.strip().startswith('sudo:'):
                         skip = True
                     else:
                         check_prompt = False
