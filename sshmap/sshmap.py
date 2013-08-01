@@ -250,7 +250,7 @@ def run_command(host, command="uname -a", username=None, password=None,
         timeout = None
     if not username:
         username = getpass.getuser()
-    if bufsize == -1 and script:
+    if bufsize == -1 and script and os.path.exists(script):
         bufsize = os.path.getsize(script) + 1024
 
     script_parameters = None
