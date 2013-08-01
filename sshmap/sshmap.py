@@ -486,7 +486,7 @@ def run(host_range, command, username=None, password=None, sudo=False,
 
     pool = multiprocessing.Pool(processes=jobs, initializer=init_worker)
     if not chunksize:
-        if jobs >= len(hosts):
+        if jobs == 1 or jobs >= len(hosts):
             chunksize = 1
         else:
             chunksize = int(len(hosts) / jobs) - 1
