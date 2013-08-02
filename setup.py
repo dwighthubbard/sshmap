@@ -27,6 +27,20 @@ setup(
     packages=["sshmap"],
     scripts=["sshmap/sshmap"],
     long_description=open('README.txt').read(),
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'Intended Audience :: System Administrators',
+        'License :: OSI Approved :: Apache Software License',
+        'Natural Language :: English',
+        'Operating System :: POSIX',
+        'Operating System :: POSIX :: Linux',
+        'Programming Language :: Python :: 2',
+        'Topic :: System :: Distributed Computing',
+        'Topic :: System :: Systems Administration',
+        'Topic :: Utilities'
+    ],
     description="A SSH Multiplexer designed to use ssh to perform map/reduce"
                 " operations",
     install_requires=['ssh', 'hostlists', 'django'],
