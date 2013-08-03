@@ -541,7 +541,7 @@ def run(host_range, command, username=None, password=None, sudo=False,
         pool.close()
     except KeyboardInterrupt:
         print('ctrl-c pressed')
-        break
+        pool.terminate()
         #except Exception as e:
     #  print 'unknown error encountered',Exception,e
     #  pass
