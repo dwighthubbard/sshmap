@@ -417,7 +417,7 @@ def run_with_runner(*args, **kwargs):
 def run(host_range, command, username=None, password=None, sudo=False,
         script=None, timeout=None, sort=False,
         jobs=None, output_callback=[callback.summarize_failures],
-        parms=None, shuffle=False, chunksize=None):
+        parms=None, shuffle=False, chunksize=None, exit_on_error=False):
     """
     Run a command on a hostlists host_range of hosts
     :param host_range:
@@ -433,6 +433,8 @@ def run(host_range, command, username=None, password=None, sudo=False,
     :param parms:
     :param shuffle:
     :param chunksize:
+    :param exit_on_error: Exit as soon as one result comes back with a non 0
+                          return code.
 
     >>> res=run(host_range='localhost',command="echo ok")
     >>> print(res[0].dump())
@@ -534,10 +536,12 @@ def run(host_range, command, username=None, password=None, sudo=False,
                 result = output_callback(result)
             results.parm = result.parm
             results.append(result)
+            if exit_on_error and result.retcode != 0:
+                break
         pool.close()
     except KeyboardInterrupt:
         print('ctrl-c pressed')
-        pool.terminate()
+        break
         #except Exception as e:
     #  print 'unknown error encountered',Exception,e
     #  pass
