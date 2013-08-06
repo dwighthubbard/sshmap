@@ -442,7 +442,13 @@ def run(host_range, command, username=None, password=None, sudo=False,
     'completed_host_count': 1}
     """
     utility.status_info(output_callback, 'Looking up hosts')
-    hosts = hostlists.expand(hostlists.range_split(host_range))
+
+    # Expand the host range if we were passed a string host list
+    if isinstance(host_range, [unicode, str]):
+        hosts = hostlists.expand(hostlists.range_split(host_range))
+    else:
+        hosts = host_range
+
     if shuffle:
         random.shuffle(hosts)
     utility.status_clear()
