@@ -29,7 +29,6 @@ import socket
 import types
 import random
 import signal
-import inspect
 import multiprocessing
 import logging
 
@@ -251,7 +250,7 @@ def run_command(host, command="uname -a", username=None, password=None,
         timeout = None
     if not username:
         username = getpass.getuser()
-    if bufsize == -1 and script:
+    if bufsize == -1 and script and os.path.exists(script):
         bufsize = os.path.getsize(script) + 1024
 
     script_parameters = None
@@ -418,7 +417,7 @@ def run_with_runner(*args, **kwargs):
 def run(host_range, command, username=None, password=None, sudo=False,
         script=None, timeout=None, sort=False,
         jobs=None, output_callback=[callback.summarize_failures],
-        parms=None, shuffle=False, chunksize=None):
+        parms=None, shuffle=False, chunksize=None, exit_on_error=False):
     """
     Run a command on a hostlists host_range of hosts
     :param host_range:
@@ -434,6 +433,8 @@ def run(host_range, command, username=None, password=None, sudo=False,
     :param parms:
     :param shuffle:
     :param chunksize:
+    :param exit_on_error: Exit as soon as one result comes back with a non 0
+                          return code.
 
     >>> res=run(host_range='localhost',command="echo ok")
     >>> print(res[0].dump())
@@ -441,7 +442,13 @@ def run(host_range, command, username=None, password=None, sudo=False,
     'completed_host_count': 1}
     """
     utility.status_info(output_callback, 'Looking up hosts')
-    hosts = hostlists.expand(hostlists.range_split(host_range))
+
+    # Expand the host range if we were passed a string host list
+    if isinstance(host_range, (unicode, str)):
+        hosts = hostlists.expand(hostlists.range_split(host_range))
+    else:
+        hosts = host_range
+
     if shuffle:
         random.shuffle(hosts)
     utility.status_clear()
@@ -487,7 +494,7 @@ def run(host_range, command, username=None, password=None, sudo=False,
 
     pool = multiprocessing.Pool(processes=jobs, initializer=init_worker)
     if not chunksize:
-        if jobs >= len(hosts):
+        if jobs == 1 or jobs >= len(hosts):
             chunksize = 1
         else:
             chunksize = int(len(hosts) / jobs) - 1
@@ -535,6 +542,8 @@ def run(host_range, command, username=None, password=None, sudo=False,
                 result = output_callback(result)
             results.parm = result.parm
             results.append(result)
+            if exit_on_error and result.retcode != 0:
+                break
         pool.close()
     except KeyboardInterrupt:
         print('ctrl-c pressed')
