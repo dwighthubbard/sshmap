@@ -22,7 +22,7 @@ except ImportError:
 
 setup(
     name="sshmap",
-    version="0.5.62",
+    version="0.6.0",
     author="Dwight Hubbard",
     author_email="dhubbard@yahoo-inc.com",
     url="https://github.com/yahoo/sshmap",
@@ -46,6 +46,6 @@ setup(
     ],
     description="A SSH Multiplexer designed to use ssh to perform map/reduce"
                 " operations",
-    requires=['ssh', 'hostlists', 'django'],
-    install_requires=['ssh', 'hostlists', 'django'],
+    requires=['paramiko>=1.13.0', 'hostlists', 'django'],
+    install_requires=['paramiko>=1.13.0', 'hostlists', 'django'],
 )
