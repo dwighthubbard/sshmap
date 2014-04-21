@@ -19,7 +19,7 @@ from setuptools import setup
 
 setup(
     name="sshmap",
-    version="0.6.10",
+    version="0.6.11",
     author="Dwight Hubbard",
     author_email="dhubbard@yahoo-inc.com",
     url="https://github.com/yahoo/sshmap",
