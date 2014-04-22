@@ -33,14 +33,21 @@ import multiprocessing
 import logging
 
 # Imports from external python extension modules
-import ssh
+import paramiko
 
 # Imports from other sshmap modules
 import hostlists
-import utility
-import callback
-import defaults
-import runner
+
+try:
+    import sshmap.utility as utility
+    import sshmap.callback as callback
+    import sshmap.defaults as defaults
+    import sshmap.runner as runner
+except ImportError:
+    import utility
+    import callback
+    import defaults
+    import runner
 
 # Fix to make ctrl-c correctly terminate child processes
 # spawned by the multiprocessing module
@@ -86,11 +93,17 @@ class ssh_result(object):
 
     def out_string(self):
         """ Return the output as a string """
-        return ''.join(self.out)
+        try:
+            return str(b''.join(self.out), encoding='UTF-8')
+        except TypeError:
+            return ''.join(self.out)
 
     def err_string(self):
         """ Return the err as a string """
-        return ''.join(self.err)
+        try:
+            return str(b''.join(self.err),encoding='UTF-8')
+        except TypeError:
+            return ''.join(self.err)
 
     def setting(self, key):
         """
@@ -112,9 +125,9 @@ class ssh_result(object):
         sys.stdout.write(self.out_string().replace('\n', '')+' ')
         sys.stderr.write(self.err_string().replace('\n', '')+' ')
         if return_retcode:
-            sys.stdout.write(self.retcode+' ')
+            sys.stdout.write('%d ' % self.retcode)
         if return_parm:
-            sys.stdout.write(self.ssh_retcode+' '+self.parm)
+            sys.stdout.write('%d %s' % (self.ssh_retcode, self.parm))
         else:
             sys.stdout.write('\n')
 
@@ -171,7 +184,7 @@ def agent_auth(transport, username):
     :param username:
     """
 
-    agent = ssh.Agent()
+    agent = paramiko.Agent()
     agent_keys = agent.get_keys()
     if len(agent_keys) == 0:
         return
@@ -183,12 +196,12 @@ def agent_auth(transport, username):
             transport.auth_publickey(username, key)
             logging.debug('agent_auth success!')
             return
-        except ssh.SSHException as e:
+        except paramiko.SSHException as e:
             logging.debug('agent_auth failed! %s', e)
 
 
-# A version of the ssh.SSHClient that supports timeout
-class fastSSHClient(ssh.SSHClient):
+# A version of the paramiko.SSHClient that supports timeout
+class fastSSHClient(paramiko.SSHClient):
     """ ssh SSHClient class extended with timeout support """
 
     def exec_command(self, command, bufsize=-1, timeout=None, pty=False):
@@ -227,7 +240,7 @@ def _term_readline(handle):
 
 def run_command(host, command="uname -a", username=None, password=None,
                 sudo=False, script=None, timeout=None, parms=None, client=None,
-                bufsize=-1, logging=False):
+                bufsize=-1, log_to_file=False):
     """
     Run a command or script on a remote node via ssh
     :param host:
@@ -240,10 +253,10 @@ def run_command(host, command="uname -a", username=None, password=None,
     :param parms:
     :param client:
     :param bufsize:
-    :param logging:
+    :param log_to_file:
     """
     # Guess any parameters not passed that can be
-    if isinstance(host, types.TupleType):
+    if isinstance(host, tuple):
         host, command, username, password, sudo, script, timeout, parms, \
             client = host
     if timeout == 0:
@@ -263,8 +276,8 @@ def run_command(host, command="uname -a", username=None, password=None,
     # Get a result object to put our output in
     result = ssh_result(host=host, parm=parms)
 
-    if logging:
-        ssh.util.log_to_file('ssh.log')
+    if log_to_file:
+        paramiko.util.log_to_file('ssh.log')
 
     close_client = False
     if not client:
@@ -275,7 +288,7 @@ def run_command(host, command="uname -a", username=None, password=None,
             result.err = ['Error creating client']
             result.ssh_retcode = defaults.RUN_FAIL_UNKNOWN
             return result
-        client.set_missing_host_key_policy(ssh.AutoAddPolicy())
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         # load_system_host_keys slows things way down
         #client.load_system_host_keys()
         close_client = True
@@ -283,10 +296,10 @@ def run_command(host, command="uname -a", username=None, password=None,
     try:
         client.connect(host, username=username, password=password,
                        timeout=timeout)
-    except ssh.AuthenticationException:
+    except paramiko.AuthenticationException:
         result.ssh_retcode = defaults.RUN_FAIL_AUTH
         return result
-    except ssh.SSHException:
+    except paramiko.SSHException:
         result.ssh_retcode = defaults.RUN_FAIL_CONNECT
         return result
     except AttributeError:
@@ -318,7 +331,7 @@ def run_command(host, command="uname -a", username=None, password=None,
                 result.err = ["WTF, this shouldn't happen\n"]
                 return result
 
-    except (ssh.SSHException, ssh.transport.SSHException):
+    except (paramiko.SSHException, paramiko.transport.SSHException):
         result.ssh_retcode = defaults.RUN_FAIL_SSH
         return result
     if sudo:
@@ -341,7 +354,9 @@ def run_command(host, command="uname -a", username=None, password=None,
 
             django.conf.settings.configure()
             if os.path.exists(script):
-                template = open(script, 'r').read()
+                t = open(script, 'r')
+                template = t.read()
+                t.close()
             else:
                 template = script
             if script_parameters:
@@ -357,9 +372,13 @@ def run_command(host, command="uname -a", username=None, password=None,
         stdin.flush()
         stdin.channel.shutdown_write()
     try:
-        # Read the output from stdout,stderr and close the connection
+        # Read the output from stdout, stderr and close the connection
         result.out = stdout.readlines()
         result.err = stderr.readlines()
+        if result.out and len(result.out) and isinstance(result.out[0], bytes):
+            result.out = [r.decode('utf-8') for r in result.out]
+        if result.err and len(result.err) and isinstance(result.err[0], bytes):
+            result.err = [r.decode('utf-8') for r in result.err]
         if sudo:
             # Remove any passwords or prompts from the start of the stderr
             # output
@@ -402,7 +421,9 @@ def run_with_runner(*args, **kwargs):
     :param kwargs:
     """
     if 'runner' in kwargs.keys() and isinstance(
-        kwargs['runner'], type.FunctionType):
+        kwargs['runner'],
+        types.FunctionType
+    ):
         kwargs['script'] = runner.get_runner(
             command=args[1],
             input="",
@@ -415,8 +436,7 @@ def run_with_runner(*args, **kwargs):
 
 
 def run(host_range, command, username=None, password=None, sudo=False,
-        script=None, timeout=None, sort=False,
-        jobs=None, output_callback=[callback.summarize_failures],
+        script=None, timeout=None, sort=False, jobs=0, output_callback=None,
         parms=None, shuffle=False, chunksize=None, exit_on_error=False):
     """
     Run a command on a hostlists host_range of hosts
@@ -441,10 +461,18 @@ def run(host_range, command, username=None, password=None, sudo=False,
     localhost ok  0 0 {'failures': [], 'total_host_count': 1,
     'completed_host_count': 1}
     """
+
+    if not output_callback:
+        output_callback = [callback.summarize_failures]
+
     utility.status_info(output_callback, 'Looking up hosts')
 
     # Expand the host range if we were passed a string host list
-    if isinstance(host_range, (unicode, str)):
+    if 'basestring' not in dir(__builtins__):
+        # basestring is not in python3.x
+        basestring = str
+
+    if isinstance(host_range, basestring):
         hosts = hostlists.expand(hostlists.range_split(host_range))
     else:
         hosts = host_range
@@ -479,7 +507,7 @@ def run(host_range, command, username=None, password=None, sudo=False,
     # Set up our ssh client
     #status_info(output_callback,'Setting up the SSH client')
     client = fastSSHClient()
-    client.set_missing_host_key_policy(ssh.AutoAddPolicy())
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     # load_system_host_keys slows things way down
     #client.load_system_host_keys()
 
@@ -510,7 +538,7 @@ def run(host_range, command, username=None, password=None, sudo=False,
     else:
         map_command = pool.imap_unordered
 
-    if isinstance(output_callback, types.ListType) and \
+    if isinstance(output_callback, list) and \
             callback.status_count in output_callback:
         callback.status_count(ssh_result(parm=results.parm))
 
@@ -535,10 +563,11 @@ def run(host_range, command, username=None, password=None, sudo=False,
         ):
             results.parm['completed_host_count'] += 1
             result.parm = results.parm
-            if isinstance(output_callback, types.ListType):
+            if isinstance(output_callback, list):
                 for cb in output_callback:
                     result = cb(result)
             else:
+                # noinspection PyCallingNonCallable
                 result = output_callback(result)
             results.parm = result.parm
             results.append(result)
@@ -552,7 +581,7 @@ def run(host_range, command, username=None, password=None, sudo=False,
     #  print 'unknown error encountered',Exception,e
     #  pass
     pool.terminate()
-    if isinstance(output_callback, types.ListType) and \
+    if isinstance(output_callback, list) and \
             callback.status_count in output_callback:
         utility.status_clear()
     return results

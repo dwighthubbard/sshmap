@@ -13,7 +13,10 @@
 sshmap utility functions
 """
 import sys
-import callback
+try:
+    import sshmap.callback as callback
+except ImportError:
+    import callback
 
 __author__ = 'dhubbard'
 

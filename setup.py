@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#Copyright (c) 2012 Yahoo! Inc. All rights reserved.
+#Copyright (c) 2012-2014 Yahoo! Inc. All rights reserved.
 #Licensed under the Apache License, Version 2.0 (the "License");
 #you may not use this file except in compliance with the License.
 #You may obtain a copy of the License at
@@ -14,12 +14,12 @@
 """
 sshmap package configuration
 """
-from distutils.core import setup
-#noinspection PyStatementEffect
+from setuptools import setup
+
 
 setup(
     name="sshmap",
-    version="0.5.61",
+    version="0.6.90",
     author="Dwight Hubbard",
     author_email="dhubbard@yahoo-inc.com",
     url="https://github.com/yahoo/sshmap",
@@ -37,11 +37,14 @@ setup(
         'Operating System :: POSIX',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3',
         'Topic :: System :: Distributed Computing',
         'Topic :: System :: Systems Administration',
         'Topic :: Utilities'
     ],
-    description="A SSH Multiplexer designed to use ssh to perform map/reduce"
-                " operations",
-    install_requires=['ssh', 'hostlists', 'django'],
+    description="A SSH Multiplexer designed to use ssh to perform map/reduce "
+                "operations",
+    requires=['paramiko', 'hostlists', 'django'],
+    install_requires=['paramiko>=1.13.0', 'hostlists>=0.6.9', 'django']
 )
+

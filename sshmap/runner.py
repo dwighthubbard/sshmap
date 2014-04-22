@@ -14,7 +14,6 @@
 Python rpc remote runner handlers
 """
 __author__ = 'dhubbard'
-import os
 import base64
 
 
