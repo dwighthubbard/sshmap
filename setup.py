@@ -19,7 +19,7 @@ from setuptools import setup
 
 setup(
     name="sshmap",
-    version="0.6.89",
+    version="0.6.90",
     author="Dwight Hubbard",
     author_email="dhubbard@yahoo-inc.com",
     url="https://github.com/yahoo/sshmap",
@@ -37,12 +37,13 @@ setup(
         'Operating System :: POSIX',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3',
         'Topic :: System :: Distributed Computing',
         'Topic :: System :: Systems Administration',
         'Topic :: Utilities'
     ],
-    description="A SSH Multiplexer designed to use ssh to perform map/reduce"
-                " operations",
+    description="A SSH Multiplexer designed to use ssh to perform map/reduce "
+                "operations",
     requires=['paramiko', 'hostlists', 'django'],
     install_requires=['paramiko>=1.13.0', 'hostlists>=0.6.9', 'django']
 )
