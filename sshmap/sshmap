@@ -15,12 +15,14 @@
  Python based ssh multiplexer optimized for map operations
  command line utility.
 """
+from __future__ import print_function
 import os
 import sys
 import optparse
 import getpass
 import sshmap
 import hostlists
+
 
 if __name__ == "__main__":
     parser = optparse.OptionParser()
@@ -104,9 +106,9 @@ if __name__ == "__main__":
                 'Enter password for user ' + getpass.getuser() + ': ')
 
     command = ' '.join(args[1:])
-    range = args[0]
+    host_range = args[0]
     results = sshmap.run(
-        args[0], command, username=options.username,
+        host_range, command, username=options.username,
         password=options.password, sudo=options.sudo,
         timeout=options.timeout, script=options.runscript, jobs=options.jobs,
         sort=options.sort,
@@ -118,14 +120,14 @@ if __name__ == "__main__":
         if aggregate_hosts and collapsed_output:
             rows, columns = os.popen('stty size', 'r').read().split()
             for md5 in aggregate_hosts.keys():
-                print "=" * (int(columns)-2)
-                print ','.join(hostlists.compress(aggregate_hosts[md5]))
-                print "-" * (int(columns)-2)
+                print("=" * (int(columns)-2))
+                print(','.join(hostlists.compress(aggregate_hosts[md5])))
+                print("-" * (int(columns)-2))
                 stdout, stderr = collapsed_output[md5]
                 if len(stdout):
-                    print ''.join(stdout)
+                    print(''.join(stdout))
                 if len(stderr):
-                    print >> sys.stderr, '\n'.join(stderr)
+                    print('\n'.join(stderr), file=sys.stderr)
     if options.summarize_failed and 'failures' in results.parm.keys() and \
             len(results.parm['failures']):
         print(

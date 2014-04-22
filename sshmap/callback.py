@@ -9,10 +9,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License. See accompanying LICENSE file.
-__author__ = 'dhubbard'
 """
 sshmap built in callback handlers
 """
+from __future__ import print_function
 import os
 import sys
 import hashlib
@@ -21,15 +21,20 @@ import stat
 import base64
 import subprocess
 
-import utility
+import sshmap
+try:
+    import sshmap.utility
+except ImportError:
+    import utility
 
+__author__ = 'dhubbard'
 
 # Filter callback handlers
 def flowthrough(result):
     """
     Builtin Callback, return the raw data passed
 
-    >>> result=flowthrough(ssh_result(["output"], ["error"],"foo", 0))
+    >>> result=flowthrough(sshmap.ssh_result(["output"], ["error"],"foo", 0))
     >>> result.dump()
     foo output error 0 0 None
     """
@@ -58,7 +63,7 @@ def exec_command(result):
     script = result.setting("callback_script")
     if not script:
         return result
-    utility.status_clear()
+    sshmap.utility.status_clear()
     result_out, result_err = subprocess.Popen(
         script + " " + result.host,
         shell=True,
@@ -124,7 +129,7 @@ def filter_json(result):
     """
     Builtin Callback, change stdout to json
 
-    >>> result=filter_json(ssh_result(["output"], ["error"],"foo", 0))
+    >>> result = filter_json(ssh_result(["output"], ["error"], "foo", 0))
     >>> result.dump()
     foo [["output"], ["error"], 0] error 0 0 None
     """
@@ -163,12 +168,12 @@ def output_prefix_host(result):
     :param result:
     hostname: out
 
-    >>> result=sshmap.callback.output_prefix_host(ssh_result(['out'],['err'], 'hostname', 0))
+    >>> result=sshmap.callback.output_prefix_host(ssh_result(['out'], ['err'], 'hostname', 0))
     >>> result.dump()
     """
     output = []
     error = []
-    utility.status_clear()
+    sshmap.utility.status_clear()
     # If summarize_failures option is set don't print ssh errors inline
     if result.setting('summarize_failed') and result.ssh_retcode:
         return result
@@ -178,22 +183,31 @@ def output_prefix_host(result):
     else:
         rc = ''
     if result.ssh_retcode:
-        print >> sys.stderr, '%s: %s' % (result.host, result.ssh_error_message())
+        print(
+            '%s: %s' % (result.host, result.ssh_error_message()),
+            file=sys.stderr
+        )
         error = ['%s: %s' % (result.host, result.ssh_error_message())]
     if len(result.out_string()):
         for line in result.out:
             if line:
-                print '%s:%s %s' % (result.host, rc, line.strip())
+                print('%s:%s %s' % (result.host, rc, line.strip()))
                 output.append('%s:%s %s\n' % (result.host, rc, line.strip()))
     if len(result.err_string()):
         for line in result.err:
             if line:
-                print >> sys.stderr, '%s:%s %s' % (result.host, rc, line.strip())
-                error.append('%s:%s Error: %s\n' % (result.host, rc, line.strip()))
+                print(
+                    '%s:%s %s' % (result.host, rc, line.strip()),
+                    file=sys.stderr
+                )
+                error.append(
+                    '%s:%s Error: %s\n' % (result.host, rc, line.strip())
+                )
     if result.setting('output'):
-        if not len(result.out_string()) and not len(result.err_string()) and not result.setting(
-                'only_output') and result.setting('print_rc'):
-            print '%s:%s' % (result.host, rc)
+        if not len(result.out_string()) and not len(result.err_string()) \
+                and not result.setting('only_output') \
+                and result.setting('print_rc'):
+            print('%s:%s' % (result.host, rc))
         sys.stdout.flush()
         sys.stderr.flush()
     result.out = output
@@ -201,11 +215,16 @@ def output_prefix_host(result):
     return result
 
 
+# noinspection PyUnboundLocalVariable
 def read_conf(key=None, prompt=True):
     """ Read settings from the config file
     :param key:
     :param prompt:
     """
+    # Use the right raw_input in python3
+    if 'raw_input' not in dir(__builtins__):
+        raw_input = input
+
     try:
         conf = json.load(open(os.path.expanduser('~/.sshmap.conf'), 'r'))
     except IOError:
