@@ -7,7 +7,7 @@ env:
     - TOXENV=pypy
     - TOXENV=pypy3
 install:
-  - "pip install tox ."
+  - "pip install paramiko>=1.13.0 hostlists>=0.6.9 ."
 script:
   - tox
 branches:
