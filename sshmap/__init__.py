@@ -18,7 +18,8 @@ try:
     import sshmap.runner
 
     # For backwards compatibility
-    from sshmap.callback import summarize_failures as callback_summarize_failures
+    from sshmap.callback import summarize_failures as \
+        callback_summarize_failures
     from sshmap.callback import aggregate_output as callback_aggregate_output
     from sshmap.callback import exec_command as callback_exec_command
     from sshmap.callback import filter_match as callback_filter_match
