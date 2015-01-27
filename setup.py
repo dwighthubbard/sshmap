@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#Copyright (c) 2012-2014 Yahoo! Inc. All rights reserved.
+#Copyright (c) 2010-2015 Yahoo! Inc. All rights reserved.
 #Licensed under the Apache License, Version 2.0 (the "License");
 #you may not use this file except in compliance with the License.
 #You may obtain a copy of the License at
@@ -14,19 +14,29 @@
 """
 sshmap package configuration
 """
+import os
 from setuptools import setup
+
+
+version_list = ['0','7','0']
+if 'TRAVIS_BUILD_NUMBER' in os.environ.keys():
+    version_list[-1] = os.environ['TRAVIS_BUILD_NUMBER']
+else:
+    revision = len(os.popen('git rev-list HEAD 2>/dev/null').readlines())
+    if revision > 0:
+        version_list[-1] = '{}'.format(revision)
+version = '.'.join(version_list)
 
 
 setup(
     name="sshmap",
-    version="0.6.90",
+    version=version,
     author="Dwight Hubbard",
     author_email="dhubbard@yahoo-inc.com",
     url="https://github.com/yahoo/sshmap",
     license="LICENSE.txt",
     packages=["sshmap"],
     scripts=["sshmap/sshmap"],
-    long_description=open('README.txt').read(),
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
@@ -44,7 +54,7 @@ setup(
     ],
     description="A SSH Multiplexer designed to use ssh to perform map/reduce "
                 "operations",
-    requires=['paramiko', 'hostlists', 'django'],
-    install_requires=['paramiko>=1.13.0', 'hostlists>=0.6.9', 'django']
+    requires=['paramiko', 'hostlists'],
+    install_requires=['paramiko>=1.13.0', 'hostlists>=0.6.9']
 )
 

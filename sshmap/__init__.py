@@ -1,4 +1,4 @@
-#Copyright (c) 2012-2013 Yahoo! Inc. All rights reserved.
+#Copyright (c) 2010-2015 Yahoo! Inc. All rights reserved.
 #Licensed under the Apache License, Version 2.0 (the "License");
 #you may not use this file except in compliance with the License.
 #You may obtain a copy of the License at
@@ -18,7 +18,8 @@ try:
     import sshmap.runner
 
     # For backwards compatibility
-    from sshmap.callback import summarize_failures as callback_summarize_failures
+    from sshmap.callback import summarize_failures as \
+        callback_summarize_failures
     from sshmap.callback import aggregate_output as callback_aggregate_output
     from sshmap.callback import exec_command as callback_exec_command
     from sshmap.callback import filter_match as callback_filter_match

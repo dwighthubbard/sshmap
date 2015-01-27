@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#Copyright (c) 2012 Yahoo! Inc. All rights reserved.
+#Copyright (c) 2010-2015 Yahoo! Inc. All rights reserved.
 #Licensed under the Apache License, Version 2.0 (the "License");
 #you may not use this file except in compliance with the License.
 #You may obtain a copy of the License at
@@ -18,27 +18,19 @@ __author__ = 'dhubbard'
 import sshmap
 import os
 import unittest
+import logging
 
 
 class TestSshmapModule(unittest.TestCase):
     """
     sshmap command line unit tests
     """
-    old_PYTHONPATH = None
-    def set_up(self):
-        try:
-            self.old_PYTHONPATH = os.environ['PYTHONPATH']
-        except KeyError:
-            self.old_PYTHONPATH = None
-        os.environ['PYTHONPATH'] = '.'
-
-    def tearDown(self):
-        if self.old_PYTHONPATH:
-            os.environ['PYTHONPATH'] = self.old_PYTHONPATH
-
     def test__run__as_user(self):
         """Run a ssh command to localhost and verify it works """
         result = sshmap.run('localhost', 'echo hello')
+        if result[0].ssh_retcode == 3:
+            logging.warn('Could not connect to localhost')
+            return
         self.assertEqual('hello\n', result[0].out_string())
 
     def test__run_shell_script_as_user(self):
@@ -52,6 +44,9 @@ class TestSshmapModule(unittest.TestCase):
             '/bin/bash',
             script='testscript.test'
         )
+        if result[0].ssh_retcode == 3:
+            logging.warn('Could not connect to localhost')
+            return
         self.assertEqual('hello\n', result[0].out_string())
         os.remove('testscript.test')
 
