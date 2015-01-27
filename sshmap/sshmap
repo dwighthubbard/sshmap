@@ -25,7 +25,9 @@ import hostlists
 
 
 if __name__ == "__main__":
-    parser = optparse.OptionParser()
+    parser = optparse.OptionParser(
+        usage='usage: %prog [options] hostrange command'
+    )
     parser.add_option("--output_json", dest="output_json",
                       default=False, action="store_true",
                       help="Output in JSON format")
@@ -125,6 +127,9 @@ if __name__ == "__main__":
                 'Enter password for user ' + getpass.getuser() + ': ')
 
     command = ' '.join(args[1:])
+    if len(args) == 0:
+        parser.print_help()
+        sys.exit(0)
     host_range = args[0]
     results = sshmap.run(
         host_range, command, username=options.username,
