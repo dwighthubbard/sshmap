@@ -90,5 +90,4 @@ class TestSshmapCLI(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    os.system('pip install paramiko')
     unittest.main()
