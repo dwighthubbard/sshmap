@@ -9,7 +9,6 @@ install:
   - "pip install ."
   - "pip install -v -r requirements.txt"
 script:
-  - python tests/command_list_test.py
   - python tests/module_test.py
 branches:
   only:
