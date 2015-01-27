@@ -24,18 +24,6 @@ class TestSshmapModule(unittest.TestCase):
     """
     sshmap command line unit tests
     """
-    old_PYTHONPATH = None
-    def set_up(self):
-        try:
-            self.old_PYTHONPATH = os.environ['PYTHONPATH']
-        except KeyError:
-            self.old_PYTHONPATH = None
-        os.environ['PYTHONPATH'] = '.'
-
-    def tearDown(self):
-        if self.old_PYTHONPATH:
-            os.environ['PYTHONPATH'] = self.old_PYTHONPATH
-
     def test__run__as_user(self):
         """Run a ssh command to localhost and verify it works """
         result = sshmap.run('localhost', 'echo hello')
