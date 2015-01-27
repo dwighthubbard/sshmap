@@ -6,7 +6,7 @@ python:
   - "3.4"
   - "pypy"
 install:
-  - "pip install ."
+  - "pip install -r requirements.txt"
 script:
   - python tests/command_list_test.py
   - python tests/module_test.py

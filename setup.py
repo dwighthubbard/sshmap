@@ -26,7 +26,7 @@ setup(
     license="LICENSE.txt",
     packages=["sshmap"],
     scripts=["sshmap/sshmap"],
-    long_description=open('README.txt').read(),
+    long_description=open('README.md').read(),
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',

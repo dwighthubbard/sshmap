@@ -1,3 +1,5 @@
+sshmap 
+======
 Description
 sshmap is a python scriptable ssh multiplexer optimized for performing 
 parallel map operations via ssh.
