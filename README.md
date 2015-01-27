@@ -1,13 +1,15 @@
 sshmap 
 ======
-Description
+[![Build Status](https://travis-ci.org/yahoo/sshmap.svg)](https://travis-ci.org/yahoo/sshmap)
+
+### Description
 sshmap is a python scriptable ssh multiplexer optimized for performing 
 parallel map operations via ssh.
 
 sshmap provides a python module in order to operate:
   sshmap - This module provides the multiprocessing ssh functionality
 
-Dependencies
+### Dependencies
 sshmap uses two open source modules.
 
 This file summarizes the tools used, their purpose, and the licenses under
