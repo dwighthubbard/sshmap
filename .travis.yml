@@ -1,15 +1,15 @@
 language: python
-env:
-    - TOXENV=py26
-    - TOXENV=py27
-    - TOXENV=py33
-    - TOXENV=py34
-    - TOXENV=pypy
-    - TOXENV=pypy3
+python:
+  - "2.7"
+  - "3.2"
+  - "3.3"
+  - "3.4"
+  - "pypy"
 install:
-  - "pip install tox paramiko>=1.13.0 hostlists>=0.6.9 ."
+  - "pip install ."
 script:
-  - tox
+  - python tests/command_list_test.py
+  - python tests/module_test.py
 branches:
   only:
     - master
