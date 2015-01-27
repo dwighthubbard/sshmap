@@ -43,7 +43,7 @@ setup(
     ],
     description="A SSH Multiplexer designed to use ssh to perform map/reduce "
                 "operations",
-    requires=['paramiko', 'hostlists', 'django'],
-    install_requires=['paramiko>=1.13.0', 'hostlists>=0.6.9', 'django']
+    requires=['paramiko', 'hostlists'],
+    install_requires=['paramiko>=1.13.0', 'hostlists>=0.6.9']
 )
 
