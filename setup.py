@@ -14,12 +14,23 @@
 """
 sshmap package configuration
 """
+import os
 from setuptools import setup
+
+
+version_list = ['0','7','0']
+if 'TRAVIS_BUILD_NUMBER' in os.environ.keys():
+    version_list[-1] = os.environ['TRAVIS_BUILD_NUMBER']
+else:
+    revision = len(os.popen('git rev-list HEAD 2>/dev/null').readlines())
+    if revision > 0:
+        version_list[-1] = '{}'.format(revision)
+version = '.'.join(version_list)
 
 
 setup(
     name="sshmap",
-    version="0.6.91",
+    version=version,
     author="Dwight Hubbard",
     author_email="dhubbard@yahoo-inc.com",
     url="https://github.com/yahoo/sshmap",
