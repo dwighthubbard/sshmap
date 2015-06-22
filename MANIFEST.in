@@ -6,6 +6,6 @@
 include README.md
 
 
-include sshmap/metadata.json
+include sshmap/package_metadata.json
 recursive-include scripts/ *
 recursive-include sshmap/ *
