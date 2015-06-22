@@ -1,14 +1,6 @@
-#Copyright (c) 2010-2015 Yahoo! Inc. All rights reserved.
-#Licensed under the Apache License, Version 2.0 (the "License");
-#you may not use this file except in compliance with the License.
-#You may obtain a copy of the License at
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License. See accompanying LICENSE file.
+# Copyright (c) 2010-2015, Yahoo Inc.
+# Copyrights licensed under the Apache 2.0 License
+# See the accompanying LICENSE.txt file for terms.
 """
 sshmap built in callback handlers
 """
@@ -21,13 +13,15 @@ import stat
 import base64
 import subprocess
 
-import sshmap
-try:
-    import sshmap.utility
-except ImportError:
-    import utility
+# import sshmap
+# try:
+#     import sshmap.utility
+# except ImportError:
+#     import utility
 
-__author__ = 'dhubbard'
+from .defaults import conf_defaults, conf_desc
+from .utility import status_clear
+
 
 # Filter callback handlers
 def flowthrough(result):
@@ -63,7 +57,7 @@ def exec_command(result):
     script = result.setting("callback_script")
     if not script:
         return result
-    sshmap.utility.status_clear()
+    status_clear()
     result_out, result_err = subprocess.Popen(
         script + " " + result.host,
         shell=True,
@@ -173,7 +167,7 @@ def output_prefix_host(result):
     """
     output = []
     error = []
-    sshmap.utility.status_clear()
+    status_clear()
     # If summarize_failures option is set don't print ssh errors inline
     if result.setting('summarize_failed') and result.ssh_retcode:
         return result
@@ -228,7 +222,7 @@ def read_conf(key=None, prompt=True):
     try:
         conf = json.load(open(os.path.expanduser('~/.sshmap.conf'), 'r'))
     except IOError:
-        conf = sshmap.conf_defaults
+        conf = conf_defaults
     if key:
         try:
             return conf[key].encode('ascii')
@@ -237,7 +231,7 @@ def read_conf(key=None, prompt=True):
     else:
         return conf
     if key and prompt:
-        conf[key] = raw_input(sshmap.conf_desc[key] + ': ')
+        conf[key] = raw_input(conf_desc[key] + ': ')
         fh = open(os.path.expanduser('~/.sshmap2.conf'), 'w')
         os.fchmod(fh.fileno(), stat.S_IRUSR | stat.S_IWUSR)
         json.dump(conf, fh)
