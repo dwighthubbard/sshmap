@@ -129,7 +129,11 @@ setup_arguments = dict(
         'django_template': ['django'],
         'all': ['django'],
     },
-    install_requires=['paramiko>=1.13.0', 'hostlists>=0.6.9']
+    install_requires=['paramiko>=1.13.0', 'hostlists>=0.6.9'],
+    package_data={
+        'redislite': ['package_metadata.json', 'bin/redis-server'],
+    },
+    include_package_data=True,
 )
 if os.path.isdir('scripts'):
     setup_arguments['scripts'] = [
