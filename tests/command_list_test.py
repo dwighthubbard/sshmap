@@ -1,16 +1,7 @@
 #!/usr/bin/env python3
-#Copyright (c) 2010-2015 Yahoo! Inc. All rights reserved.
-#Licensed under the Apache License, Version 2.0 (the "License");
-#you may not use this file except in compliance with the License.
-#You may obtain a copy of the License at
-
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License. See accompanying LICENSE file.
+# Copyright (c) 2010-2015, Yahoo Inc.
+# Copyrights licensed under the Apache 2.0 License
+# See the accompanying LICENSE.txt file for terms.
 """
 Unit tests of sshmap
 """
@@ -27,7 +18,7 @@ class TestSshmapCLI(unittest.TestCase):
 
     def test_shell_command_as_user(self):
         """Run a ssh command to localhost and verify it works """
-        po = os.popen('sshmap/sshmap localhost echo hello')
+        po = os.popen('sshmap localhost echo hello')
         result = po.read().strip()
         po.close()
         self.assertEqual('localhost: hello', result)
@@ -44,7 +35,7 @@ class TestSshmapCLI(unittest.TestCase):
     # CI
     def disable_test_shell_command_sudo(self):
         """Run a ssh command to localhost using sudo and verify it works"""
-        result = os.popen('sshmap/sshmap localhost --sudo id').read().strip()
+        result = os.popen('sshmap localhost --sudo id').read().strip()
         self.assertIn(
             'localhost: uid=0(root)', result
         )
@@ -55,7 +46,7 @@ class TestSshmapCLI(unittest.TestCase):
         sf.write('#!/bin/bash\necho hello\n')
         sf.close()
         po = os.popen(
-            'sshmap/sshmap localhost --runscript testscript.test'
+            'sshmap localhost --runscript testscript.test'
         )
         result = po.read().strip()
         po.close()
@@ -82,7 +73,7 @@ class TestSshmapCLI(unittest.TestCase):
         """Run a ssh command to localhost and verify it works """
         open('testscript.test', 'w').write('#!/bin/bash\nid\n')
         result = os.popen(
-            'sshmap/sshmap localhost --runscript testscript.test --sudo '
+            'sshmap localhost --runscript testscript.test --sudo '
             '--timeout 15'
         ).read().strip()
         self.assertIn(
