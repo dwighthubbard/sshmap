@@ -18,7 +18,7 @@ def readme():
         return f.read()
 
 
-version_list = ['0','7','0']
+version_list = ['1','0','0']
 if 'TRAVIS_BUILD_NUMBER' in os.environ.keys():
     version_list[-1] = os.environ['TRAVIS_BUILD_NUMBER']
 else:
@@ -28,7 +28,7 @@ else:
 version = '.'.join(version_list)
 
 class Git(object):
-    version_list = ['0', '8', '0']
+    version_list = ['1', '0', '0']
 
     def __init__(self, version=None):
         if version:
@@ -122,16 +122,22 @@ setup_arguments = dict(
         'Topic :: System :: Systems Administration',
         'Topic :: Utilities'
     ],
-    description="A SSH Multiplexer designed to use ssh to perform map/reduce "
-                "operations",
-    requires=['paramiko', 'hostlists'],
+    description="A SSH Multiplexer designed to use ssh to perform map/reduce operations",
+    requires=[
+        'paramiko',
+        'hostlists'
+    ],
     extras_require={
+        'test': ['nose', 'serviceping'],
         'django_template': ['django'],
         'all': ['django'],
     },
-    install_requires=['paramiko>=1.13.0', 'hostlists>=0.6.9'],
+    install_requires=[
+        'paramiko>=1.13.0',
+        'hostlists>=0.6.9'
+    ],
     package_data={
-        'redislite': ['package_metadata.json', 'bin/redis-server'],
+        'sshmap': ['package_metadata.json'],
     },
     include_package_data=True,
 )

@@ -4,7 +4,7 @@
 
 # metadata
 include README.md
-
+include README.rst
 
 include sshmap/package_metadata.json
 recursive-include scripts/ *

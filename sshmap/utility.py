@@ -4,6 +4,7 @@
 """
 sshmap utility functions
 """
+import subprocess
 import sys
 
 
@@ -36,8 +37,9 @@ def status_info(callbacks, text):
     """
     Update the display line at the cursor
     """
-    #print callbacks,text
-    #return
+    if not sys.stderr.isatty():
+        return
+
     if isinstance(callbacks, list):
         if 'status_count' in callback_names(callbacks):
             status_clear()
@@ -49,5 +51,45 @@ def status_clear():
     """
     Clear the status line (current line)
     """
+    if not sys.stderr.isatty():
+        return
+
     sys.stderr.write('\x1b[0G\x1b[0K')
-    #sys.stderr.flush()
+
+
+def get_terminal_size(default_columns=80, default_rows=24):
+    """
+    Get the terminal rows and columns if we are running on an
+    interactive terminal.
+    Returns
+    -------
+    rows : int
+        The number of rows on the current terminal.
+    columns : int
+        The number of columns on the current terminal.
+    """
+    rows = int(default_rows)
+    columns = int(default_columns)
+
+    if not sys.stdout.isatty():
+        return rows, columns
+
+    try:
+        output = subprocess.check_output(['stty', 'size'])
+    except subprocess.CalledProcessError:
+        return rows, columns
+
+    try:
+        rows, columns = output.split()
+    except ValueError:  # pragma: no cover
+        return rows, columns
+
+    rows = int(rows)
+    columns = int(columns)
+
+    if not rows:
+        rows = int(default_rows)
+    if not columns:
+        columns = int(default_columns)
+
+    return rows, columns

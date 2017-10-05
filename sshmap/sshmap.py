@@ -500,7 +500,6 @@ def run(host_range, command, username=None, password=None, sudo=False,
         jobs = defaults.JOB_MAX
 
     # Set up our ssh client
-    #status_info(output_callback,'Setting up the SSH client')
     client = fastSSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     # load_system_host_keys slows things way down
@@ -572,9 +571,6 @@ def run(host_range, command, username=None, password=None, sudo=False,
     except KeyboardInterrupt:
         print('ctrl-c pressed')
         pool.terminate()
-        #except Exception as e:
-    #  print 'unknown error encountered',Exception,e
-    #  pass
     pool.terminate()
     if isinstance(output_callback, list) and \
             callback.status_count in output_callback:

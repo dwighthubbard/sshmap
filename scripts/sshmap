@@ -133,7 +133,7 @@ if __name__ == "__main__":
         aggregate_hosts = results.setting('aggregate_hosts')
         collapsed_output = results.setting('collapsed_output')
         if aggregate_hosts and collapsed_output:
-            rows, columns = os.popen('stty size', 'r').read().split()
+            rows, columns = sshmap.utility.get_terminal_size()
             for md5 in aggregate_hosts.keys():
                 print("=" * (int(columns) - 2))
                 print(','.join(hostlists.compress(aggregate_hosts[md5])))
@@ -143,8 +143,7 @@ if __name__ == "__main__":
                     print(''.join(stdout))
                 if len(stderr):
                     print('\n'.join(stderr), file=sys.stderr)
-    if options.summarize_failed and 'failures' in results.parm.keys() and \
-            len(results.parm['failures']):
+    if options.summarize_failed and 'failures' in results.parm.keys() and len(results.parm['failures']):
         print(
             'SSH Failed to: %s' % hostlists.compress(results.parm['failures'])
         )
