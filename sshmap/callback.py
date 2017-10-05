@@ -82,8 +82,8 @@ def aggregate_output(result):
     if not collapsed_output:
         collapsed_output = {}
     h = hashlib.md5()
-    h.update(result.out_string())
-    h.update(result.err_string())
+    h.update(result.out_string().encode())
+    h.update(result.err_string().encode())
     if result.ssh_retcode:
         h.update(result.ssh_error_message())
     digest = h.hexdigest()
