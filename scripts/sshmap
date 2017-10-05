@@ -62,7 +62,7 @@ if __name__ == "__main__":
              "host will be passed as stdin/stderr of the script"
     )
     parser.add_option(
-        "--no_status", dest="show_status", default=True,
+        "--no_status", dest="show_status", default=sys.stdout.isatty(),
         action="store_false",
         help="Don't show a status count as the command progresses"
     )
