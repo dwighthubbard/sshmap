@@ -114,7 +114,7 @@ class SSHResult(object):
             self.ssh_retcode
         )
 
-    def _repr_html_(self):
+    def _repr_html__plain_(self):
         """
         __repr__ in an html table format
         """
@@ -122,6 +122,18 @@ class SSHResult(object):
         output += '<tr><td><pre>{0}</pre></td></tr>'.format(self.__str__())
         output += '</table>'
         return output
+
+    def _repr_html__bootstrap_(self):
+        output = """<div class="panel panel-default">
+            <div class="panel-heading"><strong>{host}</strong></div>
+            <div class="panel-body">{output}</div>
+        </div>""".format(host=self.host, output=self.output)
+        return output
+
+    def _repr_html_(self):
+        if self.bootstrap:
+            return self._repr_html__bootstrap_()
+        return self._repr_html__plain_()
 
     def out_string(self):
         """ Return the output as a string """
@@ -179,8 +191,9 @@ class ssh_results(list):
     variable contains the global variables used and provided by the callbacks)
     """
     parm = None
+    bootstrap = True
 
-    def _repr_html_(self):
+    def _repr_html__plain_(self):
         """
         __repr__ in an html table format
         """
@@ -190,6 +203,18 @@ class ssh_results(list):
             output += '<tr><td><pre>{0}</pre></td></tr>'.format(item.output)
         output += '</table>'
         return output
+
+    def _repr_html__bootstrap_(self):
+        output = '<row>'
+        for item in self.__iter__():
+            output += item._repr_html__bootstrap_()
+        output += '</row>'
+        return output
+
+    def _repr_html_(self):
+        if self.bootstrap:
+            return self._repr_html__bootstrap_()
+        return self._repr_html__plain_()
 
     def dump(self):
         """ Dump all the result objects """
