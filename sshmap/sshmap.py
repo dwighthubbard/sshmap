@@ -122,11 +122,11 @@ class SSHResult(object):
         return output
 
     def _repr_html__bootstrap_(self):
-        panel_context = 'panel-default'
+        panel_context = 'panel-success'
         if self.ssh_retcode > 0:
             panel_context = 'panel-warning'
         if self.retcode > 0:
-            panel_context = 'panel-error'
+            panel_context = 'panel-danger'
         panel_start = '<div class="panel {panelcontext}">'.format(panelcontext=panel_context)
         panel_header = '<div class="panel-heading"><strong>{host}</strong></div>'.format(host=self.host)
         if self.bootstrap_show_retcodes:
