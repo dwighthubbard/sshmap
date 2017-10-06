@@ -98,7 +98,10 @@ class ssh_result(object):
         output = self.stdout if self.stdout else ''
         output += self.stderr if self.stderr else ''
         return output
-    
+
+    def __repr__(self):
+        return 'sshmap.ssh_result(repr(self.out_string()), repr(self.err_string(), self.host, self.ssh_returncode)'
+
     def out_string(self):
         """ Return the output as a string """
         try:
