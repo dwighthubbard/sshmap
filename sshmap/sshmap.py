@@ -111,7 +111,7 @@ class ssh_result(object):
         """
         __repr__ in an html table format
         """
-        output = '<table><tr><th>{host}</th></tr>'
+        output = '<table><tr><th>{host}</th></tr>'.format(host=self.host)
         output += '<tr><td><pre>{0}</pre></td></tr>'.format(self.__str__())
         output += '</table>'
         return output
