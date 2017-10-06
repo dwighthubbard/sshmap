@@ -114,6 +114,7 @@ class ssh_result(object):
         output = '<table><tr><th>{host}</th></tr>'
         output += '<tr><td><pre>{0}</pre></td></tr>'.format(self.__str__())
         output += '</table>'
+        return output
 
     def out_string(self):
         """ Return the output as a string """
