@@ -107,6 +107,12 @@ class ssh_result(object):
             self.ssh_retcode
         )
 
+    def _repr_html_(self):
+        """
+        __repr__ in an html table format
+        """
+        return '<table><tr><th>{host}</th></tr><tr><td>{output}</td></tr></table>'.format(host=self.host, output=self.__str__())
+
     def out_string(self):
         """ Return the output as a string """
         try:
