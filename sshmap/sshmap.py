@@ -73,6 +73,7 @@ class SSHResult(object):
     ssh_result class, that holds the output from the ssh_call.  This is passed
     to all the callback functions.
     """
+    bootstrap = True
     bootstrap_show_retcodes = False
 
     def __init__(self, out=None, err=None, host=None, retcode=0, ssh_ret=0,
