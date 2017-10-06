@@ -97,6 +97,10 @@ class SSHResult(object):
     def stderr(self):
         return self.err_string()
 
+    @property
+    def output(self):
+        return self.stdout + self.stderr
+
     def __str__(self):
         output = self.stdout if self.stdout else ''
         output += self.stderr if self.stderr else ''
@@ -175,6 +179,17 @@ class ssh_results(list):
     variable contains the global variables used and provided by the callbacks)
     """
     parm = None
+
+    def _repr_html_(self):
+        """
+        __repr__ in an html table format
+        """
+        output = '<table width="100%">'
+        for item in self.__iter__():
+            output += '<tr><th>{0}</th></tr>'.format(item.host)
+            output += '<tr><td><pre>{0}</pre></td></tr>'.format(item.output)
+        output += '</table>'
+        return output
 
     def dump(self):
         """ Dump all the result objects """
