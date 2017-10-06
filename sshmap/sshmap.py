@@ -111,7 +111,10 @@ class ssh_result(object):
         """
         __repr__ in an html table format
         """
-        return '<table><tr><th>{host}</th></tr><tr><td>{output}</td></tr></table>'.format(host=self.host, output=self.__str__())
+        output = '<table><tr><th>{host}</th></tr>'
+        for line in self.out + self.err:
+            output += '<tr><td>{0}</td></tr>'.format(line)
+        output += '</table>'
 
     def out_string(self):
         """ Return the output as a string """
