@@ -100,7 +100,12 @@ class ssh_result(object):
         return output
 
     def __repr__(self):
-        return 'sshmap.ssh_result(repr(self.out_string()), repr(self.err_string(), self.host, self.ssh_returncode)'
+        return 'sshmap.ssh_result({0}, {1}, {2}, {3})'.format(
+            repr(self.out_string()),
+            repr(self.err_string()),
+            self.host,
+            self.ssh_retcode
+        )
 
     def out_string(self):
         """ Return the output as a string """
