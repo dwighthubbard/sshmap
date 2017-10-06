@@ -34,15 +34,18 @@ import hostlists
 # from . import runner
 
 try:
-    import sshmap.utility as utility
+    # import sshmap.utility as utility
     import sshmap.callback as callback
     import sshmap.defaults as defaults
     import sshmap.runner as runner
 except ImportError:
-    import utility
+    # import utility
     import callback
     import defaults
     import runner
+
+from .utility import get_parm_val, status_clear, status_info
+
 
 # Fix to make ctrl-c correctly terminate child processes
 # spawned by the multiprocessing module
@@ -67,7 +70,7 @@ def wrapper(func):
 IMapIterator.next = wrapper(IMapIterator.next)
 
 
-class ssh_result(object):
+class SSHResult(object):
     """
     ssh_result class, that holds the output from the ssh_call.  This is passed
     to all the callback functions.
@@ -111,7 +114,7 @@ class ssh_result(object):
         """
         __repr__ in an html table format
         """
-        output = '<table><tr><th>{host}</th></tr>'.format(host=self.host)
+        output = '<table width="100%"><tr><th>{host}</th></tr>'.format(host=self.host)
         output += '<tr><td><pre>{0}</pre></td></tr>'.format(self.__str__())
         output += '</table>'
         return output
@@ -135,7 +138,7 @@ class ssh_result(object):
         Get a setting from the parm dict or return None if it doesn't exist
         :param key:
         """
-        return utility.get_parm_val(self.parm, key)
+        return get_parm_val(self.parm, key)
 
     def ssh_error_message(self):
         """ Return the ssh_error_message for the error code """
@@ -197,7 +200,7 @@ class ssh_results(list):
         Get a setting from the parm dict or return None if it doesn't exist
         :param key:
         """
-        return utility.get_parm_val(self.parm, key)
+        return get_parm_val(self.parm, key)
 
 
 def agent_auth(transport, username):
@@ -490,7 +493,7 @@ def run(host_range, command, username=None, password=None, sudo=False,
     if not output_callback:
         output_callback = [callback.summarize_failures]
 
-    utility.status_info(output_callback, 'Looking up hosts')
+    status_info(output_callback, 'Looking up hosts')
 
     # Expand the host range if we were passed a string host list
     if 'basestring' not in dir(__builtins__):
@@ -504,7 +507,7 @@ def run(host_range, command, username=None, password=None, sudo=False,
 
     if shuffle:
         random.shuffle(hosts)
-    utility.status_clear()
+    status_clear()
     results = ssh_results()
         
     if parms:
@@ -538,8 +541,8 @@ def run(host_range, command, username=None, password=None, sudo=False,
     results.parm['total_host_count'] = len(hosts)
     results.parm['completed_host_count'] = 0
 
-    utility.status_clear()
-    utility.status_info(output_callback, 'Spawning processes')
+    status_clear()
+    status_info(output_callback, 'Spawning processes')
 
     if jobs > len(hosts):
         jobs = len(hosts)
@@ -568,8 +571,8 @@ def run(host_range, command, username=None, password=None, sudo=False,
 
     # Create a process pool and pass the parameters to it
 
-    utility.status_clear()
-    utility.status_info(
+    status_clear()
+    status_info(
         output_callback, 'Sending %d commands to each process' % chunksize)
     if callback.status_count in output_callback:
         callback.status_count(ssh_result(parm=results.parm))
@@ -604,8 +607,13 @@ def run(host_range, command, username=None, password=None, sudo=False,
     pool.terminate()
     if isinstance(output_callback, list) and \
             callback.status_count in output_callback:
-        utility.status_clear()
+        status_clear()
     return results
+
+
+# Old class names for backwards compatibility
+class ssh_result(SSHResult):
+    pass
 
 
 if __name__ == "__main__":
