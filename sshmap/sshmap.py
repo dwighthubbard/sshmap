@@ -4,10 +4,7 @@
 """
  Python based ssh multiplexer optimized for map operations
 """
-# Pull in the python3 print function for python3 compatibility
 from __future__ import print_function
-
-#disable deprecated warning messages that occur during some of the imports
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -690,19 +687,19 @@ class SSHCommand(object):
         self.command = command
         self.username = username
         self.password = password
-        self.sudo = False
-        self.script = None
-        self.timeout = None
-        self.sort = False
+        self.sudo = sudo
+        self.script = script
+        self.timeout = timeout
+        self.sort = sort
         if jobs:
             self._jobs = int(jobs)
         if output_callback:
             self.output_callback = output_callback
         if parms:
             self.parms = parms
-        self.shuffle = False
+        self.shuffle = shuffle
         self._chunksize = chunksize
-        self.exit_on_error = False
+        self.exit_on_error = exit_on_error
         self.init_client()
 
     @property
