@@ -86,6 +86,19 @@ class ssh_result(object):
         self.parm = parm
         self.host = host
 
+    @property
+    def stdout(self):
+        return self.out_string()
+
+    @property
+    def stderr(self):
+        return self.err_string()
+
+    def __str__(self):
+        output = self.stdout if self.stdout else ''
+        output += self.stderr if self.stderr else ''
+        return output
+    
     def out_string(self):
         """ Return the output as a string """
         try:
