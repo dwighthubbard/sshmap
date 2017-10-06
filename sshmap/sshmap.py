@@ -211,7 +211,7 @@ class ssh_results(list):
         return output
 
     def _repr_html__bootstrap_(self):
-        output = '<row>'
+        output = '<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"><row>'
         for item in self.__iter__():
             output += item._repr_html__bootstrap_()
         output += '</row>'
