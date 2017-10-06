@@ -28,18 +28,15 @@ import paramiko
 # Imports from other sshmap modules
 import hostlists
 
-# from . import utility
 # from . import callback
 # from . import defaults
 # from . import runner
 
 try:
-    # import sshmap.utility as utility
     import sshmap.callback as callback
     import sshmap.defaults as defaults
     import sshmap.runner as runner
 except ImportError:
-    # import utility
     import callback
     import defaults
     import runner
@@ -75,6 +72,7 @@ class SSHResult(object):
     ssh_result class, that holds the output from the ssh_call.  This is passed
     to all the callback functions.
     """
+    bootstrap_show_retcodes = True
 
     def __init__(self, out=None, err=None, host=None, retcode=0, ssh_ret=0,
                  parm=None):
@@ -124,11 +122,19 @@ class SSHResult(object):
         return output
 
     def _repr_html__bootstrap_(self):
-        output = """<div class="panel panel-default">
-            <div class="panel-heading"><strong>{host}</strong></div>
-            <div class="panel-body">{output}</div>
-        </div>""".format(host=self.host, output=self.output)
-        return output
+        panel_context = 'panel-default'
+        if self.ssh_retcode > 0:
+            panel_context = 'panel-warning'
+        if self.retcode > 0:
+            panel_context = 'panel-error'
+        panel_start = '<div class="panel {panelcontext}">'.format(panelcontext=panel_context)
+        panel_header = '<div class="panel-heading"><strong>{host}</strong></div>'.format(host=self.host)
+        if self.bootstrap_show_retcodes:
+            panel_header = '<div class="panel-heading"><strong>{host}</strong> SSH Response Code: {sshretcode} Return Code {retcode}</div>'.format(host=self.host, retcode=self.retcode, sshretcode=self.ssh_retcode)
+        panel_body = '<div class="panel-body"><pre>{output}</pre></div>'.format(output=self.output)
+        panel_footer = ''
+        panel_end = '</div>'
+        return panel_start + panel_header + panel_body + panel_footer + panel_end
 
     def _repr_html_(self):
         if self.bootstrap:
