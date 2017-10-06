@@ -21,6 +21,7 @@ import random
 import signal
 import multiprocessing
 import logging
+from collections import Iterable
 
 # Imports from external python extension modules
 import paramiko
@@ -187,6 +188,7 @@ class SSHResult(object):
             print('%s: %s' % (self.host, line.strip()))
         for line in self.err:
             print('%s: %s' % (self.host, line.strip()))
+
 
 class ssh_results(list):
     """
@@ -510,8 +512,7 @@ def run_with_runner(*args, **kwargs):
 
 def run(host_range, command, username=None, password=None, sudo=False,
         script=None, timeout=None, sort=False, jobs=0, output_callback=None,
-        parms=None, shuffle=False, chunksize=None, exit_on_error=False,
-        generator=False):
+        parms=None, shuffle=False, chunksize=None, exit_on_error=False):
     """
     Run a command on a hostlists host_range of hosts
     :param host_range:
@@ -643,10 +644,7 @@ def run(host_range, command, username=None, password=None, sudo=False,
                 # noinspection PyCallingNonCallable
                 result = output_callback(result)
             results.parm = result.parm
-            if generator:
-                yield result
-            else:
-                results.append(result)
+            results.append(result)
             if exit_on_error and result.retcode != 0:
                 break
         pool.close()
@@ -657,8 +655,168 @@ def run(host_range, command, username=None, password=None, sudo=False,
     if isinstance(output_callback, list) and \
             callback.status_count in output_callback:
         status_clear()
-    if not generator:
-        return results
+    return results
+
+
+class SSHCommand(object):
+    _jobs = defaults.JOB_MAX
+    output_callback = [callback.summarize_failures]
+    parms = {}
+
+    def __init__(self, host_range, command, username=None, password=None, sudo=False,
+            script=None, timeout=None, sort=False, jobs=None, output_callback=None,
+            parms=None, shuffle=False, chunksize=None, exit_on_error=False):
+        """
+        A generic ssh command object class
+
+        :param host_range:
+        :param command:
+        :param username:
+        :param password:
+        :param sudo:
+        :param script:
+        :param timeout:
+        :param sort:
+        :param jobs:
+        :param output_callback:
+        :param parms:
+        :param shuffle:
+        :param chunksize:
+        :param exit_on_error: Exit as soon as one result comes back with a non 0
+                              return code.
+        """
+        self.host_range = host_range
+        self.command = command
+        self.username = username
+        self.password = password
+        self.sudo = False
+        self.script = None
+        self.timeout = None
+        self.sort = False
+        if jobs:
+            self._jobs = int(jobs)
+        if output_callback:
+            self.output_callback = output_callback
+        if parms:
+            self.parms = parms
+        self.shuffle = False
+        self._chunksize = chunksize
+        self.exit_on_error = False
+        self.init_client()
+
+    @property
+    def hosts(self):
+        # Expand the host range if we were passed a string host list
+        if sys.version_info.major > 2:
+            basestring = str
+
+        host_list = self.host_range
+        if isinstance(self.host_range, basestring):
+            host_list = hostlists.expand(hostlists.range_split(self.host_range))
+        if self.shuffle:
+            random.shuffle(host_list)
+        return host_list
+
+    @property
+    def jobs(self):
+        if self._jobs > len(self.hosts):
+            return len(self.hosts)
+        return self._jobs
+
+    @property
+    def chunksize(self):
+        if self._chunksize:
+            if self._chunksize < 1:
+                return 1
+            if self._chunksize > 10:
+                return 10
+
+        if self.jobs == 1 or self.jobs >= len(self.hosts):
+            return 1
+        return int(len(self.hosts) / self.jobs) - 1
+
+    def fail_all(self, retcode=defaults.RUN_FAIL_NOPASSWORD):
+        for host in self.hosts:
+            result = ssh_result(host=host, parm=self.parms)
+            result.err = 'Sudo password required'
+            result.retcode = defaults.RUN_FAIL_NOPASSWORD
+            yield result
+        self.parms['total_host_count'] = len(self.hosts)
+        self.parms['completed_host_count'] = 0
+        self.parms['failures'] = self.hosts
+        return
+
+    def init_client(self):
+        self.client = fastSSHClient()
+        self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    def reset_parms(self):
+        self.parms = dict(
+            total_host_count=len(self.hosts),
+            completed_host_count=0,
+            chunksize=self.chunksize
+        )
+
+    def status_count(self):
+        if not isinstance(self.output_callback, Iterable):
+            return
+        if callback.status_count not in list(self.output_callback):
+            return
+        callback.status_count(ssh_result(parm=self.parms))
+
+    def run(self):
+        """
+        Run the ssh command
+        """
+        status_info(self.output_callback, 'Looking up hosts')
+        self.reset_parms()
+
+        status_clear()
+
+        if self.sudo and not self.password:
+            return self.fail_all(defaults.RUN_FAIL_NOPASSWORD)
+
+        status_info(self.output_callback, 'Spawning processes')
+        pool = multiprocessing.Pool(processes=self.jobs, initializer=init_worker)
+        map_command = pool.imap_unordered
+        if self.sort:
+            map_command = pool.imap
+
+        # self.status_count()
+
+        status_clear()
+        status_info(self.output_callback, 'Sending %d commands to each process' % self.chunksize)
+        self.status_count()
+
+        try:
+            for result in map_command(
+                    run_command,
+                    [
+                        (
+                                host, self.command, self.username, self.password, self.sudo, self.script, self.timeout,
+                                self.results.parm, self.client
+                        ) for host in self.hosts
+                    ],
+                    self.chunksize
+            ):
+                self.parms['completed_host_count'] += 1
+                result.parm = self.parms
+                if isinstance(self.output_callback, Iterable):
+                    for cb in self.output_callback:
+                        result = cb(result)
+                else:
+                    result = self.output_callback(result)
+                self.parms = result.parm
+                yield result
+                if self.exit_on_error and result.retcode != 0:
+                    break
+            pool.close()
+        except KeyboardInterrupt:
+            print('ctrl-c pressed')
+            pool.terminate()
+        pool.terminate()
+        if isinstance(self.output_callback, Iterable) and callback.status_count in self.output_callback:
+            status_clear()
 
 
 # Old class names for backwards compatibility
