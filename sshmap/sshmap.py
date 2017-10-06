@@ -794,7 +794,7 @@ class SSHCommand(object):
                     [
                         (
                                 host, self.command, self.username, self.password, self.sudo, self.script, self.timeout,
-                                self.results.parm, self.client
+                                self.parms, self.client
                         ) for host in self.hosts
                     ],
                     self.chunksize
