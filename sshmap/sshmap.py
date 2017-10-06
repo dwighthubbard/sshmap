@@ -72,7 +72,7 @@ class SSHResult(object):
     ssh_result class, that holds the output from the ssh_call.  This is passed
     to all the callback functions.
     """
-    bootstrap_show_retcodes = True
+    bootstrap_show_retcodes = False
 
     def __init__(self, out=None, err=None, host=None, retcode=0, ssh_ret=0,
                  parm=None):
@@ -187,7 +187,6 @@ class SSHResult(object):
             print('%s: %s' % (self.host, line.strip()))
         for line in self.err:
             print('%s: %s' % (self.host, line.strip()))
-
 
 class ssh_results(list):
     """
@@ -511,7 +510,8 @@ def run_with_runner(*args, **kwargs):
 
 def run(host_range, command, username=None, password=None, sudo=False,
         script=None, timeout=None, sort=False, jobs=0, output_callback=None,
-        parms=None, shuffle=False, chunksize=None, exit_on_error=False):
+        parms=None, shuffle=False, chunksize=None, exit_on_error=False,
+        generator=False):
     """
     Run a command on a hostlists host_range of hosts
     :param host_range:
@@ -643,7 +643,10 @@ def run(host_range, command, username=None, password=None, sudo=False,
                 # noinspection PyCallingNonCallable
                 result = output_callback(result)
             results.parm = result.parm
-            results.append(result)
+            if generator:
+                yield result
+            else:
+                results.append(result)
             if exit_on_error and result.retcode != 0:
                 break
         pool.close()
@@ -654,7 +657,8 @@ def run(host_range, command, username=None, password=None, sudo=False,
     if isinstance(output_callback, list) and \
             callback.status_count in output_callback:
         status_clear()
-    return results
+    if not generator:
+        return results
 
 
 # Old class names for backwards compatibility
