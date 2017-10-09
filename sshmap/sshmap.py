@@ -663,7 +663,7 @@ def run(host_range, command, username=None, password=None, sudo=False,
     return results
 
 
-class SSHCommand(object):
+class SSHCommand(ssh_results):
     _jobs = defaults.JOB_MAX
     output_callback = [callback.summarize_failures]
     parms = {}
@@ -812,6 +812,7 @@ class SSHCommand(object):
                 else:
                     result = self.output_callback(result)
                 self.parms = result.parm
+                self.append(result)
                 yield result
                 if self.exit_on_error and result.retcode != 0:
                     break
