@@ -221,6 +221,13 @@ class ssh_results(list):
             return self._repr_html__bootstrap_()
         return self._repr_html__plain_()
 
+    @property
+    def output(self):
+        out = ''
+        for item in self.__iter__():
+            out += item.output
+        return out
+
     def dump(self):
         """ Dump all the result objects """
         for item in self.__iter__():
