@@ -665,6 +665,7 @@ def run(host_range, command, username=None, password=None, sudo=False,
 
 class SSHCommand(ssh_results):
     _jobs = defaults.JOB_MAX
+    _executed = False
     output_callback = [callback.summarize_failures]
     parms = {}
 
@@ -729,6 +730,12 @@ class SSHCommand(ssh_results):
         return self._jobs
 
     @property
+    def output(self):
+        if not self._executed:
+            self.run()
+        return super(SSHCommand, self).output
+
+    @property
     def chunksize(self):
         if self._chunksize:
             if self._chunksize < 1:
@@ -769,7 +776,7 @@ class SSHCommand(ssh_results):
             return
         callback.status_count(ssh_result(parm=self.parms))
 
-    def run(self):
+    def run_iterate(self):
         """
         Run the ssh command
         """
@@ -804,6 +811,7 @@ class SSHCommand(ssh_results):
                     ],
                     self.chunksize
             ):
+                self._executed = True
                 self.parms['completed_host_count'] += 1
                 result.parm = self.parms
                 if isinstance(self.output_callback, Iterable):
@@ -812,7 +820,6 @@ class SSHCommand(ssh_results):
                 else:
                     result = self.output_callback(result)
                 self.parms = result.parm
-                self.append(result)
                 yield result
                 if self.exit_on_error and result.retcode != 0:
                     break
@@ -823,6 +830,12 @@ class SSHCommand(ssh_results):
         pool.terminate()
         if isinstance(self.output_callback, Iterable) and callback.status_count in self.output_callback:
             status_clear()
+
+    def run(self):
+        self.clear()
+        for result in self.run_iterate():
+            self.append(result)
+        return self
 
 
 # Old class names for backwards compatibility
