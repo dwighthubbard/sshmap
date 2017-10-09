@@ -11,7 +11,7 @@ from .callback import exec_command as callback_exec_command
 from .callback import filter_match as callback_filter_match
 from .callback import status_count as callback_status_count
 
-from .sshmap import run, run_command, run_with_runner
+from .sshmap import run, run_command, run_with_runner, SSHCommand
 
 
 _metadata_file = os.path.join(
@@ -34,4 +34,4 @@ if os.path.exists(_metadata_file):  # pragma: no cover
         __source_url__ = __git_base_url__ + '/tree/' + __git_hash__
 
 
-__all__ = ['callback', 'defaults', 'runner', 'sshmap', 'utility']
+__all__ = ['callback', 'defaults', 'jupyter', 'runner', 'sshmap', 'utility']

@@ -19,8 +19,6 @@ def get_parm_val(parm=None, key=None):
     """
     if parm and key in parm.keys():
         return parm[key]
-    else:
-        return None
 
 
 def callback_names(callbacks):

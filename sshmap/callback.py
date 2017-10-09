@@ -82,13 +82,14 @@ def aggregate_output(result):
     if not collapsed_output:
         collapsed_output = {}
     h = hashlib.md5()
-    h.update(result.out_string().encode())
-    h.update(result.err_string().encode())
+    h.update(result.stdout)
+    h.update(result.stderr)
     if result.ssh_retcode:
-        h.update(result.ssh_error_message())
+        h.update(result.ssh_error_message().encode())
     digest = h.hexdigest()
     if digest in aggregate_hosts.keys():
         aggregate_hosts[digest].append(result.host)
+        aggregate_hosts[digest] = list(set(aggregate_hosts[digest]))
     else:
         aggregate_hosts[digest] = [result.host]
         if result.ssh_retcode:

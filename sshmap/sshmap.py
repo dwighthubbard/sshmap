@@ -39,12 +39,15 @@ except ImportError:
     import defaults
     import runner
 
-from .utility import get_parm_val, status_clear, status_info
+from .utility import status_clear, status_info
 
 
 # Fix to make ctrl-c correctly terminate child processes
 # spawned by the multiprocessing module
 from multiprocessing.pool import IMapIterator
+
+
+LOG = logging.getLogger(__name__)
 
 
 def wrapper(func):
@@ -88,20 +91,23 @@ class SSHResult(object):
 
     @property
     def stdout(self):
-        return self.out_string()
+        return self.sequence_to_bytes(self.out)
 
     @property
     def stderr(self):
-        return self.err_string()
+        return self.sequence_to_bytes(self.err)
 
     @property
     def output(self):
-        return self.stdout + self.stderr
+        result = self.stdout + self.stderr
+        if isinstance(result, bytes):
+            return result.decode(errors='ignore')
+        return result
 
     def __str__(self):
         output = self.stdout if self.stdout else ''
         output += self.stderr if self.stderr else ''
-        return output
+        return output.decode(errors='ignore')
 
     def __repr__(self):
         return 'sshmap.ssh_result({0}, {1}, {2}, {3})'.format(
@@ -116,7 +122,7 @@ class SSHResult(object):
         __repr__ in an html table format
         """
         output = '<table width="100%"><tr><th>{host}</th></tr>'.format(host=self.host)
-        output += '<tr><td><pre>{0}</pre></td></tr>'.format(self.__str__())
+        output += '<tr><td><pre style="max-width:100%;">{0}</pre></td></tr>'.format(self.__str__())
         output += '</table>'
         return output
 
@@ -130,7 +136,7 @@ class SSHResult(object):
         panel_header = '<div class="panel-heading"><strong>{host}</strong></div>'.format(host=self.host)
         if self.bootstrap_show_retcodes:
             panel_header = '<div class="panel-heading"><strong>{host}</strong> SSH Response Code: {sshretcode} Return Code {retcode}</div>'.format(host=self.host, retcode=self.retcode, sshretcode=self.ssh_retcode)
-        panel_body = '<div class="panel-body"><pre>{output}</pre></div>'.format(output=self.output)
+        panel_body = '<div class="panel-body"><pre style="max-width:100%;">{output}</pre></div>'.format(output=self.output)
         panel_footer = ''
         panel_end = '</div>'
         return panel_start + panel_header + panel_body + panel_footer + panel_end
@@ -140,26 +146,32 @@ class SSHResult(object):
             return self._repr_html__bootstrap_()
         return self._repr_html__plain_()
 
+    def sequence_to_bytes(self, sequence):
+        output = b''
+        for line in sequence:
+            if isinstance(line, bytes):
+                output += line
+            else:
+                output += line.encode()
+        return output
+
+    def sequence_to_str(self, sequence):
+        return self.sequence_to_bytes(sequence).decode(errors='ignore')
+
     def out_string(self):
         """ Return the output as a string """
-        try:
-            return str(b''.join(self.out), encoding='UTF-8')
-        except TypeError:
-            return ''.join(self.out)
+        return self.sequence_to_str(self.out)
 
     def err_string(self):
         """ Return the err as a string """
-        try:
-            return str(b''.join(self.err),encoding='UTF-8')
-        except TypeError:
-            return ''.join(self.err)
+        return self.sequence_to_str(self.err)
 
     def setting(self, key):
         """
         Get a setting from the parm dict or return None if it doesn't exist
         :param key:
         """
-        return get_parm_val(self.parm, key)
+        return self.parm.get(key, None)
 
     def ssh_error_message(self):
         """ Return the ssh_error_message for the error code """
@@ -195,13 +207,20 @@ class ssh_results(list):
     parameter after the completion of all the result objects (the parm
     variable contains the global variables used and provided by the callbacks)
     """
+    _executed = True
     parm = None
     bootstrap = True
+    collapse = False
+
+    def run(self):
+        pass
 
     def _repr_html__plain_(self):
         """
         __repr__ in an html table format
         """
+        if not self._executed:
+            self.run()
         output = '<table width="100%">'
         for item in self.__iter__():
             output += '<tr><th>{0}</th></tr>'.format(item.host)
@@ -210,9 +229,26 @@ class ssh_results(list):
         return output
 
     def _repr_html__bootstrap_(self):
-        output = '<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"><row>'
-        for item in self.__iter__():
-            output += item._repr_html__bootstrap_()
+        if not self._executed:
+            self.run()
+        aggregate_hosts = self.setting('aggregate_hosts')
+        collapsed_output = self.setting('collapsed_output')
+        output = '<row>'
+        if self.collapse and aggregate_hosts and collapsed_output:
+            for md5, hosts in aggregate_hosts.items():
+                panel_start = '<div class="panel">'
+                panel_header = '<div class="panel-heading"><strong>{host}</strong></div>'.format(host=','.join(hostlists.compress(hosts)))
+                out, err = collapsed_output[md5]
+                out = ''.join(out)
+                err = ''.join(err)
+
+                panel_body = '<div class="panel-body"><pre style="max-width:100%;">{0}{1}</pre></div>'.format(out, err)
+                panel_footer = ''
+                panel_end = '</div>'
+                output += panel_start + panel_header + panel_body + panel_footer + panel_end
+        else:
+            for item in self.__iter__():
+                output += item._repr_html__bootstrap_()
         output += '</row>'
         return output
 
@@ -223,6 +259,8 @@ class ssh_results(list):
 
     @property
     def output(self):
+        if not self._executed:
+            self.run()
         out = ''
         for item in self.__iter__():
             out += item.output
@@ -230,6 +268,8 @@ class ssh_results(list):
 
     def dump(self):
         """ Dump all the result objects """
+        if not self._executed:
+            self.run()
         for item in self.__iter__():
             item.dump(return_parm=False, return_retcode=False)
         print(self.parm)
@@ -238,6 +278,8 @@ class ssh_results(list):
         """ Print all the objects
         :param summarize_failures:
         """
+        if not self._executed:
+            self.run()
         for item in self.__iter__():
             item.print_output()
         if summarize_failures:
@@ -252,7 +294,9 @@ class ssh_results(list):
         Get a setting from the parm dict or return None if it doesn't exist
         :param key:
         """
-        return get_parm_val(self.parm, key)
+        if not self.parm:
+            return
+        return self.parm.get(key, None)
 
 
 def agent_auth(transport, username):
@@ -667,11 +711,11 @@ class SSHCommand(ssh_results):
     _jobs = defaults.JOB_MAX
     _executed = False
     output_callback = [callback.summarize_failures]
-    parms = {}
+    parm = {}
 
     def __init__(self, host_range, command, username=None, password=None, sudo=False,
             script=None, timeout=None, sort=False, jobs=None, output_callback=None,
-            parms=None, shuffle=False, chunksize=None, exit_on_error=False):
+            parms=None, shuffle=False, chunksize=None, exit_on_error=False, collapse=False):
         """
         A generic ssh command object class
 
@@ -699,12 +743,16 @@ class SSHCommand(ssh_results):
         self.script = script
         self.timeout = timeout
         self.sort = sort
+        self.collapse = collapse
+        if collapse:
+            self.output_callback.append(callback.aggregate_output)
         if jobs:
             self._jobs = int(jobs)
         if output_callback:
             self.output_callback = output_callback
         if parms:
-            self.parms = parms
+            self.parm = parms
+
         self.shuffle = shuffle
         self._chunksize = chunksize
         self.exit_on_error = exit_on_error
@@ -730,12 +778,6 @@ class SSHCommand(ssh_results):
         return self._jobs
 
     @property
-    def output(self):
-        if not self._executed:
-            self.run()
-        return super(SSHCommand, self).output
-
-    @property
     def chunksize(self):
         if self._chunksize:
             if self._chunksize < 1:
@@ -749,21 +791,20 @@ class SSHCommand(ssh_results):
 
     def fail_all(self, retcode=defaults.RUN_FAIL_NOPASSWORD):
         for host in self.hosts:
-            result = ssh_result(host=host, parm=self.parms)
+            result = ssh_result(host=host, parm=self.parm)
             result.err = 'Sudo password required'
             result.retcode = defaults.RUN_FAIL_NOPASSWORD
             yield result
-        self.parms['total_host_count'] = len(self.hosts)
-        self.parms['completed_host_count'] = 0
-        self.parms['failures'] = self.hosts
-        return
+        self.parm['total_host_count'] = len(self.hosts)
+        self.parm['completed_host_count'] = 0
+        self.parm['failures'] = self.hosts
 
     def init_client(self):
         self.client = fastSSHClient()
         self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-    def reset_parms(self):
-        self.parms = dict(
+    def reset_parm(self):
+        self.parm = dict(
             total_host_count=len(self.hosts),
             completed_host_count=0,
             chunksize=self.chunksize
@@ -774,19 +815,21 @@ class SSHCommand(ssh_results):
             return
         if callback.status_count not in list(self.output_callback):
             return
-        callback.status_count(ssh_result(parm=self.parms))
+        callback.status_count(ssh_result(parm=self.parm))
 
     def run_iterate(self):
         """
         Run the ssh command
         """
         status_info(self.output_callback, 'Looking up hosts')
-        self.reset_parms()
+        self.reset_parm()
 
         status_clear()
 
         if self.sudo and not self.password:
-            return self.fail_all(defaults.RUN_FAIL_NOPASSWORD)
+            for result in self.fail_all(defaults.RUN_FAIL_NOPASSWORD):
+                yield result
+            return
 
         status_info(self.output_callback, 'Spawning processes')
         pool = multiprocessing.Pool(processes=self.jobs, initializer=init_worker)
@@ -806,20 +849,20 @@ class SSHCommand(ssh_results):
                     [
                         (
                                 host, self.command, self.username, self.password, self.sudo, self.script, self.timeout,
-                                self.parms, self.client
+                                self.parm, self.client
                         ) for host in self.hosts
                     ],
                     self.chunksize
             ):
                 self._executed = True
-                self.parms['completed_host_count'] += 1
-                result.parm = self.parms
+                self.parm['completed_host_count'] += 1
+                result.parm = self.parm
                 if isinstance(self.output_callback, Iterable):
                     for cb in self.output_callback:
                         result = cb(result)
                 else:
                     result = self.output_callback(result)
-                self.parms = result.parm
+                self.parm = result.parm
                 yield result
                 if self.exit_on_error and result.retcode != 0:
                     break
