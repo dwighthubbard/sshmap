@@ -6,10 +6,11 @@ python:
   - "3.6"
   - "pypy3"
 install:
-  - "pip install ."
+  - "pip install .[test]"
   - "pip install -v -r requirements.txt"
 script:
-  - python tests/module_test.py
+  - python tests/test_module_test.py
+  - python tests/test_utility.py
 branches:
   only:
     - master

@@ -4,10 +4,7 @@
 """
  Python based ssh multiplexer optimized for map operations
 """
-# Pull in the python3 print function for python3 compatibility
 from __future__ import print_function
-
-#disable deprecated warning messages that occur during some of the imports
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -21,6 +18,7 @@ import random
 import signal
 import multiprocessing
 import logging
+from collections import Iterable
 
 # Imports from external python extension modules
 import paramiko
@@ -28,25 +26,28 @@ import paramiko
 # Imports from other sshmap modules
 import hostlists
 
-# from . import utility
 # from . import callback
 # from . import defaults
 # from . import runner
 
 try:
-    import sshmap.utility as utility
     import sshmap.callback as callback
     import sshmap.defaults as defaults
     import sshmap.runner as runner
 except ImportError:
-    import utility
     import callback
     import defaults
     import runner
 
+from .utility import status_clear, status_info
+
+
 # Fix to make ctrl-c correctly terminate child processes
 # spawned by the multiprocessing module
 from multiprocessing.pool import IMapIterator
+
+
+LOG = logging.getLogger(__name__)
 
 
 def wrapper(func):
@@ -67,11 +68,13 @@ def wrapper(func):
 IMapIterator.next = wrapper(IMapIterator.next)
 
 
-class ssh_result(object):
+class SSHResult(object):
     """
     ssh_result class, that holds the output from the ssh_call.  This is passed
     to all the callback functions.
     """
+    bootstrap = True
+    bootstrap_show_retcodes = False
 
     def __init__(self, out=None, err=None, host=None, retcode=0, ssh_ret=0,
                  parm=None):
@@ -86,26 +89,89 @@ class ssh_result(object):
         self.parm = parm
         self.host = host
 
+    @property
+    def stdout(self):
+        return self.sequence_to_bytes(self.out)
+
+    @property
+    def stderr(self):
+        return self.sequence_to_bytes(self.err)
+
+    @property
+    def output(self):
+        result = self.stdout + self.stderr
+        if isinstance(result, bytes):
+            return result.decode(errors='ignore')
+        return result
+
+    def __str__(self):
+        output = self.stdout if self.stdout else ''
+        output += self.stderr if self.stderr else ''
+        return output.decode(errors='ignore')
+
+    def __repr__(self):
+        return 'sshmap.ssh_result({0}, {1}, {2}, {3})'.format(
+            repr(self.out_string()),
+            repr(self.err_string()),
+            self.host,
+            self.ssh_retcode
+        )
+
+    def _repr_html__plain_(self):
+        """
+        __repr__ in an html table format
+        """
+        output = '<table width="100%"><tr><th>{host}</th></tr>'.format(host=self.host)
+        output += '<tr><td><pre style="max-width:100%;">{0}</pre></td></tr>'.format(self.__str__())
+        output += '</table>'
+        return output
+
+    def _repr_html__bootstrap_(self):
+        panel_context = 'panel-success'
+        if self.ssh_retcode > 0:
+            panel_context = 'panel-warning'
+        if self.retcode > 0:
+            panel_context = 'panel-danger'
+        panel_start = '<div class="panel {panelcontext}">'.format(panelcontext=panel_context)
+        panel_header = '<div class="panel-heading"><strong>{host}</strong></div>'.format(host=self.host)
+        if self.bootstrap_show_retcodes:
+            panel_header = '<div class="panel-heading"><strong>{host}</strong> SSH Response Code: {sshretcode} Return Code {retcode}</div>'.format(host=self.host, retcode=self.retcode, sshretcode=self.ssh_retcode)
+        panel_body = '<div class="panel-body"><pre style="max-width:100%;">{output}</pre></div>'.format(output=self.output)
+        panel_footer = ''
+        panel_end = '</div>'
+        return panel_start + panel_header + panel_body + panel_footer + panel_end
+
+    def _repr_html_(self):
+        if self.bootstrap:
+            return self._repr_html__bootstrap_()
+        return self._repr_html__plain_()
+
+    def sequence_to_bytes(self, sequence):
+        output = b''
+        for line in sequence:
+            if isinstance(line, bytes):
+                output += line
+            else:
+                output += line.encode()
+        return output
+
+    def sequence_to_str(self, sequence):
+        return self.sequence_to_bytes(sequence).decode(errors='ignore')
+
     def out_string(self):
         """ Return the output as a string """
-        try:
-            return str(b''.join(self.out), encoding='UTF-8')
-        except TypeError:
-            return ''.join(self.out)
+        return self.sequence_to_str(self.out)
 
     def err_string(self):
         """ Return the err as a string """
-        try:
-            return str(b''.join(self.err),encoding='UTF-8')
-        except TypeError:
-            return ''.join(self.err)
+        return self.sequence_to_str(self.err)
 
     def setting(self, key):
         """
         Get a setting from the parm dict or return None if it doesn't exist
         :param key:
         """
-        return utility.get_parm_val(self.parm, key)
+        return self.parm.get(key, None)
 
     def ssh_error_message(self):
         """ Return the ssh_error_message for the error code """
@@ -141,10 +207,69 @@ class ssh_results(list):
     parameter after the completion of all the result objects (the parm
     variable contains the global variables used and provided by the callbacks)
     """
+    _executed = True
     parm = None
+    bootstrap = True
+    collapse = False
+
+    def run(self):
+        pass
+
+    def _repr_html__plain_(self):
+        """
+        __repr__ in an html table format
+        """
+        if not self._executed:
+            self.run()
+        output = '<table width="100%">'
+        for item in self.__iter__():
+            output += '<tr><th>{0}</th></tr>'.format(item.host)
+            output += '<tr><td><pre>{0}</pre></td></tr>'.format(item.output)
+        output += '</table>'
+        return output
+
+    def _repr_html__bootstrap_(self):
+        if not self._executed:
+            self.run()
+        aggregate_hosts = self.setting('aggregate_hosts')
+        collapsed_output = self.setting('collapsed_output')
+        output = '<row>'
+        if self.collapse and aggregate_hosts and collapsed_output:
+            for md5, hosts in aggregate_hosts.items():
+                panel_start = '<div class="panel">'
+                panel_header = '<div class="panel-heading"><strong>{host}</strong></div>'.format(host=','.join(hostlists.compress(hosts)))
+                out, err = collapsed_output[md5]
+                out = ''.join(out)
+                err = ''.join(err)
+
+                panel_body = '<div class="panel-body"><pre style="max-width:100%;">{0}{1}</pre></div>'.format(out, err)
+                panel_footer = ''
+                panel_end = '</div>'
+                output += panel_start + panel_header + panel_body + panel_footer + panel_end
+        else:
+            for item in self.__iter__():
+                output += item._repr_html__bootstrap_()
+        output += '</row>'
+        return output
+
+    def _repr_html_(self):
+        if self.bootstrap:
+            return self._repr_html__bootstrap_()
+        return self._repr_html__plain_()
+
+    @property
+    def output(self):
+        if not self._executed:
+            self.run()
+        out = ''
+        for item in self.__iter__():
+            out += item.output
+        return out
 
     def dump(self):
         """ Dump all the result objects """
+        if not self._executed:
+            self.run()
         for item in self.__iter__():
             item.dump(return_parm=False, return_retcode=False)
         print(self.parm)
@@ -153,6 +278,8 @@ class ssh_results(list):
         """ Print all the objects
         :param summarize_failures:
         """
+        if not self._executed:
+            self.run()
         for item in self.__iter__():
             item.print_output()
         if summarize_failures:
@@ -167,7 +294,9 @@ class ssh_results(list):
         Get a setting from the parm dict or return None if it doesn't exist
         :param key:
         """
-        return utility.get_parm_val(self.parm, key)
+        if not self.parm:
+            return
+        return self.parm.get(key, None)
 
 
 def agent_auth(transport, username):
@@ -460,7 +589,7 @@ def run(host_range, command, username=None, password=None, sudo=False,
     if not output_callback:
         output_callback = [callback.summarize_failures]
 
-    utility.status_info(output_callback, 'Looking up hosts')
+    status_info(output_callback, 'Looking up hosts')
 
     # Expand the host range if we were passed a string host list
     if 'basestring' not in dir(__builtins__):
@@ -474,7 +603,7 @@ def run(host_range, command, username=None, password=None, sudo=False,
 
     if shuffle:
         random.shuffle(hosts)
-    utility.status_clear()
+    status_clear()
     results = ssh_results()
         
     if parms:
@@ -500,7 +629,6 @@ def run(host_range, command, username=None, password=None, sudo=False,
         jobs = defaults.JOB_MAX
 
     # Set up our ssh client
-    #status_info(output_callback,'Setting up the SSH client')
     client = fastSSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     # load_system_host_keys slows things way down
@@ -509,8 +637,8 @@ def run(host_range, command, username=None, password=None, sudo=False,
     results.parm['total_host_count'] = len(hosts)
     results.parm['completed_host_count'] = 0
 
-    utility.status_clear()
-    utility.status_info(output_callback, 'Spawning processes')
+    status_clear()
+    status_info(output_callback, 'Spawning processes')
 
     if jobs > len(hosts):
         jobs = len(hosts)
@@ -539,8 +667,8 @@ def run(host_range, command, username=None, password=None, sudo=False,
 
     # Create a process pool and pass the parameters to it
 
-    utility.status_clear()
-    utility.status_info(
+    status_clear()
+    status_info(
         output_callback, 'Sending %d commands to each process' % chunksize)
     if callback.status_count in output_callback:
         callback.status_count(ssh_result(parm=results.parm))
@@ -572,14 +700,190 @@ def run(host_range, command, username=None, password=None, sudo=False,
     except KeyboardInterrupt:
         print('ctrl-c pressed')
         pool.terminate()
-        #except Exception as e:
-    #  print 'unknown error encountered',Exception,e
-    #  pass
     pool.terminate()
     if isinstance(output_callback, list) and \
             callback.status_count in output_callback:
-        utility.status_clear()
+        status_clear()
     return results
+
+
+class SSHCommand(ssh_results):
+    _jobs = defaults.JOB_MAX
+    _executed = False
+    output_callback = [callback.summarize_failures]
+    parm = {}
+
+    def __init__(self, host_range, command, username=None, password=None, sudo=False,
+            script=None, timeout=None, sort=False, jobs=None, output_callback=None,
+            parms=None, shuffle=False, chunksize=None, exit_on_error=False, collapse=False):
+        """
+        A generic ssh command object class
+
+        :param host_range:
+        :param command:
+        :param username:
+        :param password:
+        :param sudo:
+        :param script:
+        :param timeout:
+        :param sort:
+        :param jobs:
+        :param output_callback:
+        :param parms:
+        :param shuffle:
+        :param chunksize:
+        :param exit_on_error: Exit as soon as one result comes back with a non 0
+                              return code.
+        """
+        self.host_range = host_range
+        self.command = command
+        self.username = username
+        self.password = password
+        self.sudo = sudo
+        self.script = script
+        self.timeout = timeout
+        self.sort = sort
+        self.collapse = collapse
+        if collapse:
+            self.output_callback.append(callback.aggregate_output)
+        if jobs:
+            self._jobs = int(jobs)
+        if output_callback:
+            self.output_callback = output_callback
+        if parms:
+            self.parm = parms
+
+        self.shuffle = shuffle
+        self._chunksize = chunksize
+        self.exit_on_error = exit_on_error
+        self.init_client()
+
+    @property
+    def hosts(self):
+        # Expand the host range if we were passed a string host list
+        if sys.version_info.major > 2:
+            basestring = str
+
+        host_list = self.host_range
+        if isinstance(self.host_range, basestring):
+            host_list = hostlists.expand(hostlists.range_split(self.host_range))
+        if self.shuffle:
+            random.shuffle(host_list)
+        return host_list
+
+    @property
+    def jobs(self):
+        if self._jobs > len(self.hosts):
+            return len(self.hosts)
+        return self._jobs
+
+    @property
+    def chunksize(self):
+        if self._chunksize:
+            if self._chunksize < 1:
+                return 1
+            if self._chunksize > 10:
+                return 10
+
+        if self.jobs == 1 or self.jobs >= len(self.hosts):
+            return 1
+        return int(len(self.hosts) / self.jobs) - 1
+
+    def fail_all(self, retcode=defaults.RUN_FAIL_NOPASSWORD):
+        for host in self.hosts:
+            result = ssh_result(host=host, parm=self.parm)
+            result.err = 'Sudo password required'
+            result.retcode = defaults.RUN_FAIL_NOPASSWORD
+            yield result
+        self.parm['total_host_count'] = len(self.hosts)
+        self.parm['completed_host_count'] = 0
+        self.parm['failures'] = self.hosts
+
+    def init_client(self):
+        self.client = fastSSHClient()
+        self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    def reset_parm(self):
+        self.parm = dict(
+            total_host_count=len(self.hosts),
+            completed_host_count=0,
+            chunksize=self.chunksize
+        )
+
+    def status_count(self):
+        if not isinstance(self.output_callback, Iterable):
+            return
+        if callback.status_count not in list(self.output_callback):
+            return
+        callback.status_count(ssh_result(parm=self.parm))
+
+    def run_iterate(self):
+        """
+        Run the ssh command
+        """
+        status_info(self.output_callback, 'Looking up hosts')
+        self.reset_parm()
+
+        status_clear()
+
+        if self.sudo and not self.password:
+            for result in self.fail_all(defaults.RUN_FAIL_NOPASSWORD):
+                yield result
+            return
+
+        status_info(self.output_callback, 'Spawning processes')
+        pool = multiprocessing.Pool(processes=self.jobs, initializer=init_worker)
+        map_command = pool.imap_unordered
+        if self.sort:
+            map_command = pool.imap
+
+        # self.status_count()
+
+        status_clear()
+        status_info(self.output_callback, 'Sending %d commands to each process' % self.chunksize)
+        self.status_count()
+
+        try:
+            for result in map_command(
+                    run_command,
+                    [
+                        (
+                                host, self.command, self.username, self.password, self.sudo, self.script, self.timeout,
+                                self.parm, self.client
+                        ) for host in self.hosts
+                    ],
+                    self.chunksize
+            ):
+                self._executed = True
+                self.parm['completed_host_count'] += 1
+                result.parm = self.parm
+                if isinstance(self.output_callback, Iterable):
+                    for cb in self.output_callback:
+                        result = cb(result)
+                else:
+                    result = self.output_callback(result)
+                self.parm = result.parm
+                yield result
+                if self.exit_on_error and result.retcode != 0:
+                    break
+            pool.close()
+        except KeyboardInterrupt:
+            print('ctrl-c pressed')
+            pool.terminate()
+        pool.terminate()
+        if isinstance(self.output_callback, Iterable) and callback.status_count in self.output_callback:
+            status_clear()
+
+    def run(self):
+        self.clear()
+        for result in self.run_iterate():
+            self.append(result)
+        return self
+
+
+# Old class names for backwards compatibility
+class ssh_result(SSHResult):
+    pass
 
 
 if __name__ == "__main__":

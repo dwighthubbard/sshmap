@@ -25,6 +25,7 @@ pip-log.txt
 .coverage
 .tox
 nosetests.xml
+covertura.xml
 
 # Translations
 *.mo
@@ -39,3 +40,8 @@ nosetests.xml
 
 # Backup files
 *~
+
+# Generated files
+/build
+/sshmap/package_metadata.json
+/testscript.test
