@@ -10,8 +10,20 @@ Description
 sshmap is a python scriptable ssh multiplexer optimized for performing 
 parallel map operations via ssh.
 
-sshmap provides a python module in order to operate:
-  sshmap - This module provides the multiprocessing ssh functionality
+It has the following features:
+
+* Rapidly run a single command or script on one or multiple hosts
+* Scalable, a single host can run operate on very large numbers of systems
+* Supports async callbacks
+* Streams and executes commands to remote systems without writing them
+  to disk on the remote systems.
+* Jupyter/IPython notebook features
+
+Provides Multiple interfaces:
+
+* Provides Python classes for running commands on multiple systems.
+* Command line utility
+* Jupyter/IPython notebook extension
 
 Dependencies
 ============

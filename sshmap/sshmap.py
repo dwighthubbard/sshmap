@@ -210,6 +210,7 @@ class ssh_results(list):
     _executed = True
     parm = None
     bootstrap = True
+    table = False
     collapse = False
 
     def run(self):
@@ -418,8 +419,7 @@ def run_command(host, command="uname -a", username=None, password=None,
         close_client = True
         # noinspection PyBroadException
     try:
-        client.connect(host, username=username, password=password,
-                       timeout=timeout)
+        client.connect(host, username=username, password=password, timeout=timeout)
     except paramiko.AuthenticationException:
         result.ssh_retcode = defaults.RUN_FAIL_AUTH
         return result
@@ -668,8 +668,7 @@ def run(host_range, command, username=None, password=None, sudo=False,
     # Create a process pool and pass the parameters to it
 
     status_clear()
-    status_info(
-        output_callback, 'Sending %d commands to each process' % chunksize)
+    status_info(output_callback, 'Sending %d commands to each process' % chunksize)
     if callback.status_count in output_callback:
         callback.status_count(ssh_result(parm=results.parm))
         

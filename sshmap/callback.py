@@ -20,7 +20,7 @@ import subprocess
 #     import utility
 
 from .defaults import conf_defaults, conf_desc
-from .utility import status_clear
+from .utility import header, status_clear
 
 
 # Filter callback handlers
