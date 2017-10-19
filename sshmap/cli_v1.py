@@ -1,21 +1,20 @@
-#!/usr/bin/env python
-# Copyright (c) 2010-2015, Yahoo Inc.
-# Copyrights licensed under the Apache 2.0 License
-# See the accompanying LICENSE.txt file for terms.
-"""
- Python based ssh multiplexer optimized for map operations
- command line utility.
-"""
 from __future__ import print_function
 import os
 import sys
-import optparse
 import getpass
-import sshmap
+import logging
+import optparse
+
 import hostlists
 
+from .callback import aggregate_output, exec_command, filter_match, filter_base64, filter_json, \
+    output_prefix_host, output_print_result, \
+    status_count, summarize_failures
+from .sshmap import SSHCommand, run
+from .utility import get_terminal_size, header, status_clear
 
-if __name__ == "__main__":
+
+def cli():
     parser = optparse.OptionParser(
         usage='usage: %prog [options] hostrange command'
     )
@@ -85,22 +84,22 @@ if __name__ == "__main__":
     options.username = getpass.getuser()
     options.output = True
     # Create our callback pipeline based on the options passed
-    callback = [sshmap.callback.summarize_failures]
+    callback = [summarize_failures]
     if options.match:
-        callback.append(sshmap.callback.filter_match)
+        callback.append(filter_match)
     if options.output_base64:
-        callback.append(sshmap.callback.filter_base64)
+        callback.append(filter_base64)
     if options.output_json:
-        callback.append(sshmap.callback.filter_json)
+        callback.append(filter_json)
     if options.callback_script:
-        callback.append(sshmap.callback.exec_command)
+        callback.append(exec_command)
     else:
         if options.aggregate_output:
-            callback.append(sshmap.callback.aggregate_output)
+            callback.append(aggregate_output)
         else:
-            callback.append(sshmap.callback.output_prefix_host)
+            callback.append(output_prefix_host)
     if options.show_status:
-        callback.append(sshmap.callback.status_count)
+        callback.append(status_count)
         # Get the password if the options passed indicate it might be needed
     if options.sudo:
         # Prompt for password, we really need to add a password file option
@@ -122,7 +121,7 @@ if __name__ == "__main__":
         parser.print_help()
         sys.exit(0)
     host_range = args[0]
-    results = sshmap.run(
+    results = run(
         host_range, command, username=options.username,
         password=options.password, sudo=options.sudo,
         timeout=options.timeout, script=options.runscript, jobs=options.jobs,
@@ -132,9 +131,9 @@ if __name__ == "__main__":
     if options.aggregate_output:
         aggregate_hosts = results.setting('aggregate_hosts')
         collapsed_output = results.setting('collapsed_output')
-        sshmap.utility.status_clear()
+        status_clear()
         if aggregate_hosts and collapsed_output:
-            rows, columns = sshmap.utility.get_terminal_size()
+            rows, columns = get_terminal_size()
             for md5 in aggregate_hosts.keys():
                 print("=" * (int(columns) - 2))
                 print(','.join(hostlists.compress(aggregate_hosts[md5])))
@@ -148,3 +147,7 @@ if __name__ == "__main__":
         print(
             'SSH Failed to: %s' % hostlists.compress(results.parm['failures'])
         )
+
+
+if __name__ == "__main__":
+    cli()

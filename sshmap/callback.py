@@ -157,6 +157,22 @@ def status_count(result):
 
 
 #Output callback handlers
+def output_print_result(result):
+    if result.setting('only_output') and not result.output:
+        return result
+    if result.setting('header_format') == 'prefixhost':
+        return output_prefix_host(result)
+
+    terse = False
+    if result.setting('header_format') == 'terse':
+        terse = True
+    status_clear()
+    header(result.host, collapse=terse)
+    print(result.output)
+    sys.stderr.flush()
+    sys.stdout.flush()
+    return result
+
 def output_prefix_host(result):
     """
     Builtin Callback, print the output with the hostname: prefixed to each line

@@ -9,6 +9,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # Python Standard Library imports
+import copy
 import os
 import sys
 import getpass
@@ -199,6 +200,15 @@ class SSHResult(object):
         for line in self.err:
             print('%s: %s' % (self.host, line.strip()))
 
+    def readlines(self):
+        """Read output on a line by line basis"""
+        lines = []
+        if self.out:
+            lines += self.out
+        if self.err:
+            lines += self.err
+        return [line.decode() for line in lines]
+
 
 class ssh_results(list):
     """
@@ -300,6 +310,7 @@ class ssh_results(list):
         return self.parm.get(key, None)
 
 
+
 def agent_auth(transport, username):
     """
     Attempt to authenticate to the given transport using any of the private
@@ -365,7 +376,7 @@ def _term_readline(handle):
 
 def run_command(host, command="uname -a", username=None, password=None,
                 sudo=False, script=None, timeout=None, parms=None, client=None,
-                bufsize=-1, log_to_file=False):
+                bufsize=-1, log_to_file=False, pty=False):
     """
     Run a command or script on a remote node via ssh
     :param host:
@@ -449,7 +460,7 @@ def run_command(host, command="uname -a", username=None, password=None,
                 return result
         else:
             stdin, stdout, stderr, chan = client.exec_command(
-                command, timeout=timeout, bufsize=bufsize)
+                command, timeout=timeout, bufsize=bufsize, pty=pty)
             if not chan:
                 result.ssh_retcode = defaults.RUN_FAIL_CONNECT
                 result.err = ["WTF, this shouldn't happen\n"]
@@ -749,12 +760,15 @@ class SSHCommand(ssh_results):
             self._jobs = int(jobs)
         if output_callback:
             self.output_callback = output_callback
+        self.initial_parm = {}
         if parms:
-            self.parm = parms
+            assert isinstance(parms, dict)
+            self.initial_parm = parms
 
         self.shuffle = shuffle
         self._chunksize = chunksize
         self.exit_on_error = exit_on_error
+        self.reset_parm()
         self.init_client()
 
     @property
@@ -803,10 +817,13 @@ class SSHCommand(ssh_results):
         self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     def reset_parm(self):
-        self.parm = dict(
-            total_host_count=len(self.hosts),
-            completed_host_count=0,
-            chunksize=self.chunksize
+        self.parm = copy.copy(self.initial_parm)
+        self.parm.update(
+            dict(
+                total_host_count=len(self.hosts),
+                completed_host_count=0,
+                chunksize=self.chunksize
+            )
         )
 
     def status_count(self):

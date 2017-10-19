@@ -6,8 +6,8 @@ from getpass import getuser
 import logging
 import os
 import sys
-from .callback import aggregate_output, exec_command, filter_match, filter_base64, filter_json, output_prefix_host, status_count, \
-    summarize_failures
+from .callback import aggregate_output, exec_command, filter_match, filter_base64, filter_json, output_prefix_host, output_print_result, \
+    status_count, summarize_failures
 
 
 LOG = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ def parse_arguments():
     job_args.add_argument("--shuffle", dest="shuffle", default=False, action="store_true", help="Shuffle (randomize) the order of hosts")
 
     format_args = parser.add_argument_group('Output Formats')
-    format_args.add_argument("--output_terse_headers", dest="output_terse_headers", default=False, action="store_true", help="Use more compact headers")
+    format_args.add_argument("--header_format", default='prefixhost', choices=['prefixhost', 'terse', 'full'], help="Format for the hostname headers")
     format_args.add_argument("--output_json", dest="output_json", default=False, action="store_true", help="Output in JSON format")
     format_args.add_argument("--output_base64", dest="output_base64", default=False, action="store_true", help="Output in base64 format")
 
@@ -46,7 +46,7 @@ def parse_arguments():
     parser.add_argument('command', nargs='*', type=str, help='Command to run on the remote system')
 
     options = parser.parse_args()
-    
+
     if options.runscript and not options.command:
         firstline = open(options.runscript).readline().strip()
         if firstline.startswith('#!'):
@@ -69,7 +69,7 @@ def parse_arguments():
         if options.aggregate_output:
             options.callbacks.append(aggregate_output)
         else:
-            options.callbacks.append(output_prefix_host)
+            options.callbacks.append(output_print_result)
     if options.show_status:
         if sys.stdout.isatty():
             options.callbacks.append(status_count)

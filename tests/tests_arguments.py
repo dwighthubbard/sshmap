@@ -2,8 +2,8 @@ import os
 import sys
 from unittest import TestCase, main
 from sshmap.arguments import parse_arguments
-from sshmap.callback import aggregate_output, exec_command, filter_match, filter_base64, filter_json, output_prefix_host, status_count, \
-    summarize_failures
+from sshmap.callback import aggregate_output, exec_command, filter_match, filter_base64, filter_json, output_prefix_host, \
+    output_print_result, status_count, summarize_failures
 
 
 class TestArguments(TestCase):
@@ -46,7 +46,7 @@ class TestArguments(TestCase):
         self.assertListEqual(result.command, ['id'])
         self.assertListEqual(result.hostrange, ['testhost'])
         self.assertFalse(result.aggregate_output, "aggregate_output is not False")
-        self.assertListEqual(result.callbacks, [summarize_failures, output_prefix_host, status_count])
+        self.assertListEqual(result.callbacks, [summarize_failures, output_print_result, status_count])
 
     def test__parse_arguments__collapse(self):
         sys.argv = ['sshmap', '--collapse', 'testhost', 'id']

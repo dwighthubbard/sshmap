@@ -127,11 +127,6 @@ setup_arguments = dict(
         'paramiko',
         'hostlists'
     ],
-    extras_require={
-        'test': ['nose', 'serviceping'],
-        'django_template': ['django'],
-        'all': ['django'],
-    },
     install_requires=[
         'paramiko>=1.13.0',
         'hostlists>=0.6.9'
@@ -140,6 +135,7 @@ setup_arguments = dict(
         'sshmap': ['package_metadata.json'],
     },
     include_package_data=True,
+    setup_requires=['setuptools>29.0.0']
 )
 if os.path.isdir('scripts'):
     setup_arguments['scripts'] = [

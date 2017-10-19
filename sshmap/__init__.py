@@ -34,4 +34,4 @@ if os.path.exists(_metadata_file):  # pragma: no cover
         __source_url__ = __git_base_url__ + '/tree/' + __git_hash__
 
 
-__all__ = ['arguments', 'callback', 'defaults', 'jupyter', 'runner', 'sshmap', 'utility']
+__all__ = ['arguments', 'callback', 'cli_v1', 'cli_v2', 'defaults', 'jupyter', 'runner', 'sshmap', 'utility']
