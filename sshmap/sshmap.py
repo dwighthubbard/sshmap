@@ -867,6 +867,11 @@ class SSHCommand(ssh_results):
 
         status_clear()
 
+        if not self.hosts:
+            status_info(self.output_callback, 'No hosts found')
+            status_clear()
+            return
+
         if self.sudo and not self.password:
             for result in self.fail_all(defaults.RUN_FAIL_NOPASSWORD):
                 yield result
