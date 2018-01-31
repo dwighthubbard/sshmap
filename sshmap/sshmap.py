@@ -241,14 +241,29 @@ class ssh_results(list):
         if not self._executed:
             self.run()
         output = ''
-        for item in self.__iter__():
-            if self.ansi:
-                output += '\033[1m'
-            output += item.host
-            if self.ansi:
-                output += '\033[0m'
-            output += os.linesep
-            output += item.output + os.linesep
+        aggregate_hosts = self.setting('aggregate_hosts')
+        collapsed_output = self.setting('collapsed_output')
+        if self.collapse and aggregate_hosts and collapsed_output:
+            for md5, hosts in aggregate_hosts.items():
+                if self.ansi:
+                    output += '\033[1m'
+                output += ','.join(hostlists.compress(hosts))
+                if self.ansi:
+                    output += '\033[0m'
+                output += os.linesep
+                out, err = collapsed_output[md5]
+                output += ''.join(out)
+                output += ''.join(err)
+                output += os.linesep
+        else:
+            for item in self.__iter__():
+                if self.ansi:
+                    output += '\033[1m'
+                output += item.host
+                if self.ansi:
+                    output += '\033[0m'
+                output += os.linesep
+                output += item.output + os.linesep
         if output.endswith(os.linesep):
             return output[:-1]
         return output
@@ -866,6 +881,10 @@ class SSHCommand(ssh_results):
         self.reset_parm()
 
         status_clear()
+
+        if not self.hosts:
+            # No hosts to ssh to
+            return
 
         if self.sudo and not self.password:
             for result in self.fail_all(defaults.RUN_FAIL_NOPASSWORD):
