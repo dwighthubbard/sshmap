@@ -210,10 +210,48 @@ class ssh_results(list):
     _executed = True
     parm = None
     bootstrap = True
+    _ansi_repr = False
+    ansi = False
     collapse = False
 
     def run(self):
         pass
+
+    def __repr__(self):
+        if self._ansi_repr:
+            return self._repr_text_()
+
+        if not self._executed:
+            self.run()
+        output = []
+        for item in self.__iter__():
+            output.append(item)
+        return repr(output)
+
+    def __str__(self):
+        if not self._executed:
+            self.run()
+        output = ''
+        for item in self.__iter__():
+            output += item.host + os.linesep
+            output += item.output + os.linesep
+        return output
+
+    def _repr_text_(self):
+        if not self._executed:
+            self.run()
+        output = ''
+        for item in self.__iter__():
+            if self.ansi:
+                output += '\033[1m'
+            output += item.host
+            if self.ansi:
+                output += '\033[0m'
+            output += os.linesep
+            output += item.output + os.linesep
+        if output.endswith(os.linesep):
+            return output[:-1]
+        return output
 
     def _repr_html__plain_(self):
         """
@@ -338,6 +376,7 @@ class fastSSHClient(paramiko.SSHClient):
         :return:
         """
         chan = self._transport.open_session()
+        paramiko.agent.AgentRequestHandler(chan)
         chan.settimeout(timeout)
         if pty:
             chan.get_pty()
@@ -713,9 +752,11 @@ class SSHCommand(ssh_results):
     output_callback = [callback.summarize_failures]
     parm = {}
 
-    def __init__(self, host_range, command, username=None, password=None, sudo=False,
+    def __init__(
+            self, host_range, command, username=None, password=None, sudo=False,
             script=None, timeout=None, sort=False, jobs=None, output_callback=None,
-            parms=None, shuffle=False, chunksize=None, exit_on_error=False, collapse=False):
+            parms=None, shuffle=False, chunksize=None, exit_on_error=False, collapse=False
+    ):
         """
         A generic ssh command object class
 

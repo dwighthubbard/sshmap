@@ -27,6 +27,7 @@ else:
         version_list[-1] = '{}'.format(revision)
 version = '.'.join(version_list)
 
+
 class Git(object):
     version_list = ['1', '0', '0']
 
