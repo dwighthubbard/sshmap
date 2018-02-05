@@ -289,7 +289,7 @@ class ssh_results(list):
         output = '<row>'
         if self.collapse and aggregate_hosts and collapsed_output:
             for md5, hosts in aggregate_hosts.items():
-                panel_start = '<div class="panel">'
+                panel_start = '<div class="panel panel-success">'
                 panel_header = '<div class="panel-heading"><strong>{host}</strong></div>'.format(host=','.join(hostlists.compress(hosts)))
                 out, err = collapsed_output[md5]
                 out = ''.join(out)
