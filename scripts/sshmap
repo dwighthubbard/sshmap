@@ -71,6 +71,7 @@ if __name__ == "__main__":
                       help="Use sudo to run the command as root")
     parser.add_option("--password", dest="password", default=False,
                       action="store_true", help="Prompt for a password")
+    parser.add_option('--login_user', default=None, help='Remote user to connect as')
 
     (options, args) = parser.parse_args()
 
@@ -82,7 +83,7 @@ if __name__ == "__main__":
 
     # Default option values
     options.password = None
-    options.username = getpass.getuser()
+    options.username = options.login_user if options.login_user else getpass.getuser()
     options.output = True
     # Create our callback pipeline based on the options passed
     callback = [sshmap.callback.summarize_failures]
